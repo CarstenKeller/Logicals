@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -32,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -132,20 +134,30 @@ fun GameScreen(
                     val boardModifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                    when (puzzle) {
-                        is SudokuPuzzle -> SudokuBoard(puzzle, state, viewModel::select, boardModifier)
-                        is KakuroPuzzle -> {
-                            KakuroBoard(puzzle, state, viewModel::select, boardModifier)
-                            if (state.hint == null) KakuroHint(puzzle, state)
+                    // Gitter mit fester Zellgröße dürfen auch kleiner werden (Überblick).
+                    val fixedCells = puzzle is KakuroPuzzle || puzzle is CatsweeperPuzzle
+                    key(state.round) {
+                        ZoomPanBox(
+                            modifier = boardModifier,
+                            minZoom = if (fixedCells) 0.4f else 1f,
+                            maxZoom = if (fixedCells) 3f else 4f,
+                        ) { zoom, viewport ->
+                            // Rätsel, die sich an den Platz anpassen, bekommen die gezoomte Fläche.
+                            val fit = Modifier.size(viewport * zoom)
+                            when (puzzle) {
+                                is SudokuPuzzle -> SudokuBoard(puzzle, state, viewModel::select, fit)
+                                is KakuroPuzzle -> KakuroBoard(puzzle, state, viewModel::select, zoom = zoom)
+                                is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, fit)
+                                is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, fit)
+                                is SkyscraperPuzzle -> SkyscraperBoard(puzzle, state, viewModel::select, fit)
+                                is CatsweeperPuzzle -> CatsweeperBoard(
+                                    puzzle, state, viewModel::catTap, viewModel::catMark, zoom = zoom,
+                                )
+                                null -> Unit
+                            }
                         }
-                        is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, boardModifier)
-                        is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, boardModifier)
-                        is SkyscraperPuzzle -> SkyscraperBoard(puzzle, state, viewModel::select, boardModifier)
-                        is CatsweeperPuzzle -> CatsweeperBoard(
-                            puzzle, state, viewModel::catTap, viewModel::catMark, boardModifier,
-                        )
-                        null -> Unit
                     }
+                    if (puzzle is KakuroPuzzle && state.hint == null) KakuroHint(puzzle, state)
                     state.hint?.let { hint ->
                         HintCard(hint, onApply = viewModel::applyHint, onClose = viewModel::dismissHint)
                     }

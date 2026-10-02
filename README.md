@@ -18,8 +18,8 @@ Android-App für Logikrätsel (Kotlin, Jetpack Compose).
     Tippen deckt auf, langes Drücken markiert mit 🦴.
 - **Rätseldauer** oberhalb des Rätsels; die Zeit läuft nur, solange der Rätselbildschirm aktiv ist
   (stoppt beim Verlassen des Bildschirms und wenn die App in den Hintergrund geht).
-- Kakuro-Spielfeld lässt sich in **alle Richtungen verschieben** (auch diagonal, mit Schwung),
-  wenn es nicht auf den Bildschirm passt.
+- **Zoom** in allen Rätseln per Zwei-Finger-Geste (scharf neu gezeichnet), Verschieben mit einem Finger in alle
+  Richtungen (mit Schwung); Kakuro und Catsweeper lassen sich auch herauszoomen. „Zoom zurücksetzen“ erscheint bei Bedarf.
 - Notizmodus, Konfliktmarkierung, Hilfszeile mit möglichen Kakuro-Kombinationen.
 - **💡 Hinweise** für alle Rätsel: nächster Schritt mit Erklärung, wie man selbst darauf kommt, und
   Hervorhebung der beteiligten Felder. Falsche Einträge werden zuerst gemeldet. Findet die eingebaute

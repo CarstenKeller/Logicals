@@ -112,7 +112,9 @@ fun KakuroBoard(
     state: GameUiState,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    zoom: Float = 1f,
 ) {
+    val cellSize = KakuroCellSize * zoom
     val colors = MaterialTheme.colorScheme
     val geometry = puzzle.geometry
     val selected = state.selected
@@ -125,9 +127,9 @@ fun KakuroBoard(
     }
     val blackColor = if (colors.surface.luminance() > 0.5f) Color(0xFF37474F) else Color(0xFF101418)
     val clueTextColor = Color(0xFFECEFF1)
-    val clueSize = with(LocalDensity.current) { (KakuroCellSize * 0.3f).toSp() }
+    val clueSize = with(LocalDensity.current) { (cellSize * 0.3f).toSp() }
 
-    FreeScrollBox(modifier) {
+    Box(modifier) {
         Column(
             Modifier
                 .padding(12.dp)
@@ -142,7 +144,7 @@ fun KakuroBoard(
                             val inRun = geometry.acrossRunOf[i] in highlightedRuns ||
                                 geometry.downRunOf[i] in highlightedRuns
                             NumberCell(
-                                size = KakuroCellSize,
+                                size = cellSize,
                                 value = state.entries[i],
                                 notes = state.notes[i],
                                 background = hintBackground(state, i) ?: when {
@@ -157,6 +159,7 @@ fun KakuroBoard(
                             )
                         } else {
                             ClueCell(
+                                size = cellSize,
                                 across = cell.across,
                                 down = cell.down,
                                 background = if (i in state.conflicts) colors.error else blackColor,
@@ -172,10 +175,10 @@ fun KakuroBoard(
 }
 
 @Composable
-private fun ClueCell(across: Int, down: Int, background: Color, textColor: Color, fontSize: TextUnit) {
+private fun ClueCell(size: Dp, across: Int, down: Int, background: Color, textColor: Color, fontSize: TextUnit) {
     Box(
         Modifier
-            .size(KakuroCellSize)
+            .size(size)
             .background(background)
             .border(0.5.dp, Color.Black.copy(alpha = 0.5f)),
     ) {

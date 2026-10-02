@@ -41,6 +41,8 @@
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
 
+    <string name="zoom_reset">Zoom zurücksetzen</string>
+
     <string name="back">Zurück</string>
     <string name="continue_game">Fortsetzen</string>
     <string name="continue_details">Bisherige Zeit: %1$s</string>

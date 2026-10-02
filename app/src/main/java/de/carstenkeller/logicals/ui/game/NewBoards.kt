@@ -289,20 +289,23 @@ fun CatsweeperBoard(
     onTap: (Int) -> Unit,
     onLongPress: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    zoom: Float = 1f,
 ) {
+    val cellSize = CatCellSize * zoom
     val colors = MaterialTheme.colorScheme
     val numberColors = if (colors.surface.luminance() > 0.5f) NumberColorsLight else NumberColorsDark
-    val emojiSize = with(LocalDensity.current) { (CatCellSize * 0.5f).toSp() }
-    val numberSize = with(LocalDensity.current) { (CatCellSize * 0.5f).toSp() }
+    val emojiSize = with(LocalDensity.current) { (cellSize * 0.5f).toSp() }
+    val numberSize = with(LocalDensity.current) { (cellSize * 0.5f).toSp() }
     val gameOver = state.lost || state.solved
 
-    FreeScrollBox(modifier) {
+    Box(modifier) {
         Column(Modifier.padding(8.dp)) {
             for (r in 0 until puzzle.height) {
                 Row {
                     for (c in 0 until puzzle.width) {
                         val i = r * puzzle.width + c
                         CatCell(
+                            size = cellSize,
                             highlight = hintBackground(state, i),
                             entry = state.entries[i],
                             dog = puzzle.isDog(i),
@@ -328,6 +331,7 @@ fun CatsweeperBoard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CatCell(
+    size: androidx.compose.ui.unit.Dp,
     highlight: Color?,
     entry: Int,
     dog: Boolean,
@@ -351,7 +355,7 @@ private fun CatCell(
     }
     Box(
         Modifier
-            .size(CatCellSize)
+            .size(size)
             .background(background)
             .border(0.5.dp, borderColor)
             .combinedClickable(onClick = onTap, onLongClick = onLongPress),
