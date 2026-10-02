@@ -5,12 +5,13 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import de.carstenkeller.logicals.core.CatsweeperPuzzle
+import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.GameState
-import de.carstenkeller.logicals.core.KakuroGenerator
 import de.carstenkeller.logicals.core.Puzzle
+import de.carstenkeller.logicals.core.PuzzleFactory
+import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
-import de.carstenkeller.logicals.core.SudokuDifficulty
-import de.carstenkeller.logicals.core.SudokuGenerator
 import de.carstenkeller.logicals.data.GameRepository
 import de.carstenkeller.logicals.ui.GameArgs
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 data class GameUiState(
     val loading: Boolean = true,
@@ -33,7 +35,12 @@ data class GameUiState(
     val conflicts: Set<Int> = emptySet(),
     val selected: Int = -1,
     val notesMode: Boolean = false,
+    /** Catsweeper: Tippen markiert statt aufzudecken. */
+    val markMode: Boolean = false,
     val solved: Boolean = false,
+    val lost: Boolean = false,
+    /** Zählt neu gestartete Rätsel, damit Dialoge pro Rätsel neu erscheinen. */
+    val round: Int = 0,
 )
 
 class GameViewModel(
@@ -65,7 +72,7 @@ class GameViewModel(
         val generateNew = savedStateHandle.get<Boolean>(GameArgs.NEW) == true &&
             savedStateHandle.get<Boolean>(KEY_STARTED) != true
         val game = if (generateNew) {
-            val puzzle = withContext(Dispatchers.Default) { generate() }
+            val puzzle = withContext(Dispatchers.Default) { PuzzleFactory.generate(type, argOptions()) }
             GameState.start(puzzle).also {
                 repository.save(it)
                 savedStateHandle[KEY_STARTED] = true
@@ -77,6 +84,21 @@ class GameViewModel(
             _state.value = GameUiState(loading = false, missing = true)
             return
         }
+        show(game, round = 0)
+    }
+
+    private fun argOptions(): PuzzleOptions {
+        val difficulty = savedStateHandle.get<String>(GameArgs.DIFFICULTY)
+            ?.let { name -> Difficulty.entries.firstOrNull { it.name == name } }
+            ?: Difficulty.MEDIUM
+        return PuzzleOptions(
+            difficulty = difficulty,
+            width = savedStateHandle.get<Int>(GameArgs.WIDTH) ?: type.defaultWidth,
+            height = savedStateHandle.get<Int>(GameArgs.HEIGHT) ?: type.defaultHeight,
+        )
+    }
+
+    private fun show(game: GameState, round: Int) {
         accumulated = game.elapsedMillis
         _elapsed.value = accumulated
         val entries = game.entries.toIntArray()
@@ -87,24 +109,24 @@ class GameViewModel(
             notes = game.notes,
             conflicts = game.puzzle.conflicts(entries),
             solved = game.puzzle.isSolved(entries),
+            lost = game.puzzle.isLost(entries),
+            round = round,
         )
         if (screenActive) startTimer()
     }
 
-    private fun generate(): Puzzle = when (type) {
-        PuzzleType.SUDOKU -> {
-            val difficulty = savedStateHandle.get<String>(GameArgs.DIFFICULTY)
-                ?.let { name -> SudokuDifficulty.entries.firstOrNull { it.name == name } }
-                ?: SudokuDifficulty.MEDIUM
-            SudokuGenerator().generate(difficulty)
-        }
-        PuzzleType.KAKURO -> {
-            val w = savedStateHandle.get<Int>(GameArgs.WIDTH) ?: 10
-            val h = savedStateHandle.get<Int>(GameArgs.HEIGHT) ?: 10
-            KakuroGenerator().generate(
-                w.coerceIn(KakuroGenerator.MIN_SIZE, KakuroGenerator.MAX_SIZE),
-                h.coerceIn(KakuroGenerator.MIN_SIZE, KakuroGenerator.MAX_SIZE),
-            ).puzzle
+    /** Startet ein neues Rätsel mit denselben Einstellungen wie das aktuelle. */
+    fun playAgain() {
+        val current = _state.value
+        val puzzle = current.puzzle ?: return
+        stopTimer()
+        _state.value = GameUiState(loading = true, round = current.round)
+        viewModelScope.launch {
+            val next = withContext(Dispatchers.Default) { PuzzleFactory.generate(type, puzzle.options) }
+            val game = GameState.start(next)
+            repository.save(game)
+            savedStateHandle[KEY_STARTED] = true
+            show(game, round = current.round + 1)
         }
     }
 
@@ -125,7 +147,7 @@ class GameViewModel(
 
     private fun startTimer() {
         val s = _state.value
-        if (s.puzzle == null || s.solved || runningSince != null) return
+        if (s.puzzle == null || s.solved || s.lost || runningSince != null) return
         runningSince = SystemClock.elapsedRealtime()
         tickJob = viewModelScope.launch {
             while (isActive) {
@@ -146,7 +168,7 @@ class GameViewModel(
     private fun currentElapsed(): Long =
         accumulated + (runningSince?.let { SystemClock.elapsedRealtime() - it } ?: 0L)
 
-    // ------------------------------------------------------------------ Eingaben
+    // ------------------------------------------------------------------ Zahlenrätsel
 
     fun select(index: Int) {
         val puzzle = _state.value.puzzle ?: return
@@ -183,18 +205,53 @@ class GameViewModel(
         applyEntries(s, entries, notes)
     }
 
+    // ------------------------------------------------------------------ Catsweeper
+
+    fun toggleMarkMode() = _state.update { it.copy(markMode = !it.markMode) }
+
+    /** Tippen: aufdecken (bzw. markieren im Markiermodus). */
+    fun catTap(index: Int) {
+        if (_state.value.markMode) catMark(index) else catReveal(index)
+    }
+
+    private fun catReveal(index: Int) {
+        val s = _state.value
+        var puzzle = s.puzzle as? CatsweeperPuzzle ?: return
+        if (s.solved || s.lost) return
+        val current = s.entries.toIntArray()
+        // Der erste Zug trifft nie einen Hund.
+        if (current.none { it == CatsweeperPuzzle.REVEALED }) {
+            puzzle = puzzle.withSafeStart(index, Random.Default)
+        }
+        val next = puzzle.reveal(current, index)
+        applyEntries(s.copy(puzzle = puzzle), next.toList(), s.notes)
+    }
+
+    /** Lang drücken: Knochen-Markierung setzen oder entfernen. */
+    fun catMark(index: Int) {
+        val s = _state.value
+        val puzzle = s.puzzle as? CatsweeperPuzzle ?: return
+        if (s.solved || s.lost) return
+        val next = puzzle.toggleMark(s.entries.toIntArray(), index)
+        applyEntries(s, next.toList(), s.notes)
+    }
+
+    // ------------------------------------------------------------------ gemeinsam
+
     private fun applyEntries(s: GameUiState, entries: List<Int>, notes: List<Int>) {
         val puzzle = s.puzzle ?: return
         val array = entries.toIntArray()
         val solved = puzzle.isSolved(array)
+        val lost = !solved && puzzle.isLost(array)
         _state.value = s.copy(
             entries = entries,
             notes = notes,
             conflicts = puzzle.conflicts(array),
             solved = solved,
-            selected = if (solved) -1 else s.selected,
+            lost = lost,
+            selected = if (solved || lost) -1 else s.selected,
         )
-        if (solved) {
+        if (solved || lost) {
             stopTimer()
             repository.delete(type)
         } else {
@@ -205,7 +262,7 @@ class GameViewModel(
     private fun persist() {
         val s = _state.value
         val puzzle = s.puzzle ?: return
-        if (s.solved) return
+        if (s.solved || s.lost) return
         repository.save(GameState(puzzle, s.entries, s.notes, currentElapsed()))
     }
 

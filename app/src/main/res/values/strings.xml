@@ -8,6 +8,23 @@
     <string name="kakuro">Kakuro</string>
     <string name="kakuro_description">Zahlenkreuzworträtsel: Ziffern ergeben die Summen, keine Wiederholung pro Folge.</string>
 
+    <string name="futoshiki">Futoshiki</string>
+    <string name="futoshiki_description">Jede Ziffer einmal pro Zeile und Spalte, dazu Größer-/Kleiner-Zeichen zwischen Feldern.</string>
+    <string name="kenken">KenKen</string>
+    <string name="kenken_description">Jede Ziffer einmal pro Zeile und Spalte; die Zahlen in jedem Käfig ergeben das angegebene Rechenergebnis.</string>
+    <string name="catsweeper">Catsweeper</string>
+    <string name="catsweeper_description">🐱 Decke die Katzen auf, ohne einen der versteckten Hunde 🐶 zu wecken. Zahlen zeigen, wie viele Hunde eine Katze umzingeln.</string>
+
+    <string name="size_label">Größe: %1$d × %1$d</string>
+    <string name="columns_label">Spalten: %1$d</string>
+    <string name="rows_label">Zeilen: %1$d</string>
+    <string name="catsweeper_mark">🦴 Markieren</string>
+    <string name="catsweeper_help">Tippen: Katze aufdecken · Lang drücken: Hund mit 🦴 markieren</string>
+    <string name="catsweeper_remaining">🐶 übrig: %1$d</string>
+    <string name="lost_title">Wuff! 🐶</string>
+    <string name="lost_text">Ein Hund hat deine Katze erwischt.</string>
+    <string name="play_again">Nochmal</string>
+
     <string name="back">Zurück</string>
     <string name="continue_game">Fortsetzen</string>
     <string name="continue_details">Bisherige Zeit: %1$s</string>
@@ -18,8 +35,6 @@
     <string name="difficulty_easy">Leicht</string>
     <string name="difficulty_medium">Mittel</string>
     <string name="difficulty_hard">Schwer</string>
-    <string name="kakuro_columns">Spalten: %1$d</string>
-    <string name="kakuro_rows">Zeilen: %1$d</string>
     <string name="kakuro_size_hint">Inklusive der obersten Zeile und linken Spalte mit Summenfeldern.</string>
     <string name="discard_title">Begonnenes Rätsel verwerfen?</string>
     <string name="discard_text">Dein aktuelles Rätsel und die bisherige Zeit gehen verloren.</string>

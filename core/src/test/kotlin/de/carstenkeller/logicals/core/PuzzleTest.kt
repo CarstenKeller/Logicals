@@ -10,12 +10,12 @@ class PuzzleTest {
 
     @Test
     fun sudokuIsUniqueAndSolutionIsAccepted() {
-        for (difficulty in SudokuDifficulty.entries) {
+        for (difficulty in Difficulty.entries) {
             repeat(5) { seed ->
                 val puzzle = SudokuGenerator(Random(seed)).generate(difficulty)
                 val givens = puzzle.givens.toIntArray()
                 assertEquals(1, SudokuSolver.countSolutions(givens))
-                assertTrue(puzzle.givens.count { it != 0 } >= difficulty.targetClues)
+                assertTrue(puzzle.givens.count { it != 0 } >= difficulty.sudokuClues)
                 assertFalse(puzzle.isSolved(puzzle.initialEntries()))
                 assertTrue(puzzle.isSolved(puzzle.solution.toIntArray()))
             }
@@ -24,7 +24,7 @@ class PuzzleTest {
 
     @Test
     fun sudokuConflictsAreDetected() {
-        val puzzle = SudokuGenerator(Random(1)).generate(SudokuDifficulty.EASY)
+        val puzzle = SudokuGenerator(Random(1)).generate(Difficulty.EASY)
         val entries = puzzle.initialEntries()
         val empty = entries.indexOfFirst { it == 0 }
         val row = empty / 9
@@ -72,7 +72,7 @@ class PuzzleTest {
     @Test
     fun gameStateSurvivesJsonRoundTrip() {
         val kakuro = KakuroGenerator(Random(7)).generate(7, 6).puzzle
-        val sudoku = SudokuGenerator(Random(7)).generate(SudokuDifficulty.MEDIUM)
+        val sudoku = SudokuGenerator(Random(7)).generate(Difficulty.MEDIUM)
         for (puzzle in listOf<Puzzle>(kakuro, sudoku)) {
             val state = GameState.start(puzzle).copy(elapsedMillis = 12345)
             val json = PuzzleJson.encodeToString(GameState.serializer(), state)

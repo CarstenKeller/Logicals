@@ -216,7 +216,7 @@ private fun ClueCell(across: Int, down: Int, background: Color, textColor: Color
 // ---------------------------------------------------------------------- gemeinsam
 
 @Composable
-private fun NumberCell(
+internal fun NumberCell(
     size: Dp,
     value: Int,
     notes: Int,

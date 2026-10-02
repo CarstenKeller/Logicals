@@ -6,10 +6,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
 import de.carstenkeller.logicals.ui.game.GameScreen
 import de.carstenkeller.logicals.ui.menu.MainMenuScreen
-import de.carstenkeller.logicals.ui.menu.NewGameOptions
 import de.carstenkeller.logicals.ui.menu.PuzzleHomeScreen
 
 object GameArgs {
@@ -31,7 +31,7 @@ private object Routes {
 
     fun continueGame(type: PuzzleType) = "game/${type.name}?${GameArgs.NEW}=false"
 
-    fun newGame(type: PuzzleType, options: NewGameOptions) =
+    fun newGame(type: PuzzleType, options: PuzzleOptions) =
         "game/${type.name}?${GameArgs.NEW}=true&${GameArgs.DIFFICULTY}=${options.difficulty.name}" +
             "&${GameArgs.WIDTH}=${options.width}&${GameArgs.HEIGHT}=${options.height}"
 }

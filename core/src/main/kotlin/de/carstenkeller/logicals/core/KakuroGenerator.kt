@@ -266,8 +266,8 @@ class KakuroGenerator(private val random: Random = Random.Default) {
     }
 
     companion object {
-        const val MIN_SIZE = 4
-        const val MAX_SIZE = 30
+        val MIN_SIZE = PuzzleType.KAKURO.sizeRange!!.first
+        val MAX_SIZE = PuzzleType.KAKURO.sizeRange!!.last
         private const val MAX_RUN = 9
         private const val PREFERRED_RUN = 6
         private const val MAX_STALE_STEPS = 20_000

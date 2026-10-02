@@ -77,6 +77,7 @@ data class KakuroPuzzle(
     val unique: Boolean = true,
 ) : Puzzle() {
     override val kind: PuzzleType get() = PuzzleType.KAKURO
+    override val options: PuzzleOptions get() = PuzzleOptions(Difficulty.MEDIUM, width, height)
 
     val geometry: KakuroGeometry by lazy {
         KakuroGeometry(width, height, BooleanArray(cells.size) { cells[it].white })

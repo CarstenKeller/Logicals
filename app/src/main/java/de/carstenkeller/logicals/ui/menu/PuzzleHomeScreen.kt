@@ -38,23 +38,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import de.carstenkeller.logicals.R
+import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.GameState
-import de.carstenkeller.logicals.core.KakuroGenerator
-import de.carstenkeller.logicals.core.KakuroPuzzle
+import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
-import de.carstenkeller.logicals.core.SudokuDifficulty
-import de.carstenkeller.logicals.core.SudokuPuzzle
 import de.carstenkeller.logicals.data.GameRepository
 import de.carstenkeller.logicals.data.Settings
 import de.carstenkeller.logicals.ui.formatDuration
+import de.carstenkeller.logicals.ui.labelRes
 import de.carstenkeller.logicals.ui.titleRes
 import kotlin.math.roundToInt
-
-data class NewGameOptions(
-    val difficulty: SudokuDifficulty = SudokuDifficulty.MEDIUM,
-    val width: Int = 10,
-    val height: Int = 10,
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,23 +55,23 @@ fun PuzzleHomeScreen(
     type: PuzzleType,
     onBack: () -> Unit,
     onContinue: () -> Unit,
-    onNewGame: (NewGameOptions) -> Unit,
+    onNewGame: (PuzzleOptions) -> Unit,
 ) {
     val context = LocalContext.current
     val repository = remember { GameRepository.get(context) }
     val settings = remember { Settings(context) }
     val saved by remember(type) { repository.observe(type) }.collectAsState(initial = null)
 
-    var difficulty by rememberSaveable { mutableStateOf(settings.sudokuDifficulty) }
-    var width by rememberSaveable { mutableIntStateOf(settings.kakuroWidth) }
-    var height by rememberSaveable { mutableIntStateOf(settings.kakuroHeight) }
+    val initial = remember(type) { settings.options(type) }
+    var difficulty by rememberSaveable { mutableStateOf(initial.difficulty) }
+    var width by rememberSaveable { mutableIntStateOf(initial.width) }
+    var height by rememberSaveable { mutableIntStateOf(initial.height) }
     var confirmDiscard by remember { mutableStateOf(false) }
 
     fun startNew() {
-        settings.sudokuDifficulty = difficulty
-        settings.kakuroWidth = width
-        settings.kakuroHeight = height
-        onNewGame(NewGameOptions(difficulty, width, height))
+        val options = PuzzleOptions(difficulty, width, if (type.rectangular) height else width)
+        settings.save(type, options)
+        onNewGame(options)
     }
 
     Scaffold(
@@ -106,17 +99,22 @@ fun PuzzleHomeScreen(
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.new_game), style = MaterialTheme.typography.titleLarge)
-                    when (type) {
-                        PuzzleType.SUDOKU -> DifficultySelector(difficulty) { difficulty = it }
-                        PuzzleType.KAKURO -> {
-                            SizeSlider(stringResource(R.string.kakuro_columns, width), width) { width = it }
-                            SizeSlider(stringResource(R.string.kakuro_rows, height), height) { height = it }
-                            Text(
-                                stringResource(R.string.kakuro_size_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                    if (type.hasDifficulty) DifficultySelector(difficulty) { difficulty = it }
+                    val range = type.sizeRange
+                    if (range != null) {
+                        if (type.rectangular) {
+                            SizeSlider(stringResource(R.string.columns_label, width), width, range) { width = it }
+                            SizeSlider(stringResource(R.string.rows_label, height), height, range) { height = it }
+                        } else {
+                            SizeSlider(stringResource(R.string.size_label, width), width, range) { width = it }
                         }
+                    }
+                    if (type == PuzzleType.KAKURO) {
+                        Text(
+                            stringResource(R.string.kakuro_size_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     Button(
                         onClick = { if (saved != null) confirmDiscard = true else startNew() },
@@ -171,23 +169,17 @@ private fun ContinueCard(saved: GameState?, onContinue: () -> Unit) {
 }
 
 @Composable
-private fun describe(state: GameState): String = when (val p = state.puzzle) {
-    is SudokuPuzzle -> stringResource(p.difficulty.labelRes)
-    is KakuroPuzzle -> "${p.width} × ${p.height}"
+private fun describe(state: GameState): String {
+    val p = state.puzzle
+    val size = "${p.width} × ${p.height}"
+    return if (p.kind.hasDifficulty) "$size · ${stringResource(p.options.difficulty.labelRes)}" else size
 }
-
-val SudokuDifficulty.labelRes: Int
-    get() = when (this) {
-        SudokuDifficulty.EASY -> R.string.difficulty_easy
-        SudokuDifficulty.MEDIUM -> R.string.difficulty_medium
-        SudokuDifficulty.HARD -> R.string.difficulty_hard
-    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DifficultySelector(selected: SudokuDifficulty, onSelect: (SudokuDifficulty) -> Unit) {
+private fun DifficultySelector(selected: Difficulty, onSelect: (Difficulty) -> Unit) {
     Text(stringResource(R.string.difficulty), style = MaterialTheme.typography.titleSmall)
-    val options = SudokuDifficulty.entries
+    val options = Difficulty.entries
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, difficulty ->
             SegmentedButton(
@@ -200,14 +192,14 @@ private fun DifficultySelector(selected: SudokuDifficulty, onSelect: (SudokuDiff
 }
 
 @Composable
-private fun SizeSlider(label: String, value: Int, onChange: (Int) -> Unit) {
+private fun SizeSlider(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit) {
     Column {
         Text(label, style = MaterialTheme.typography.titleSmall)
         Slider(
             value = value.toFloat(),
             onValueChange = { onChange(it.roundToInt()) },
-            valueRange = KakuroGenerator.MIN_SIZE.toFloat()..KakuroGenerator.MAX_SIZE.toFloat(),
-            steps = KakuroGenerator.MAX_SIZE - KakuroGenerator.MIN_SIZE - 1,
+            valueRange = range.first.toFloat()..range.last.toFloat(),
+            steps = (range.last - range.first - 1).coerceAtLeast(0),
         )
     }
 }

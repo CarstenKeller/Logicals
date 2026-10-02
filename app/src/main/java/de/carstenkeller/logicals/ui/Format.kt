@@ -2,6 +2,7 @@ package de.carstenkeller.logicals.ui
 
 import androidx.annotation.StringRes
 import de.carstenkeller.logicals.R
+import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.PuzzleType
 import java.util.Locale
 
@@ -23,6 +24,9 @@ val PuzzleType.titleRes: Int
     get() = when (this) {
         PuzzleType.SUDOKU -> R.string.sudoku
         PuzzleType.KAKURO -> R.string.kakuro
+        PuzzleType.FUTOSHIKI -> R.string.futoshiki
+        PuzzleType.KENKEN -> R.string.kenken
+        PuzzleType.CATSWEEPER -> R.string.catsweeper
     }
 
 @get:StringRes
@@ -30,4 +34,15 @@ val PuzzleType.descriptionRes: Int
     get() = when (this) {
         PuzzleType.SUDOKU -> R.string.sudoku_description
         PuzzleType.KAKURO -> R.string.kakuro_description
+        PuzzleType.FUTOSHIKI -> R.string.futoshiki_description
+        PuzzleType.KENKEN -> R.string.kenken_description
+        PuzzleType.CATSWEEPER -> R.string.catsweeper_description
+    }
+
+@get:StringRes
+val Difficulty.labelRes: Int
+    get() = when (this) {
+        Difficulty.EASY -> R.string.difficulty_easy
+        Difficulty.MEDIUM -> R.string.difficulty_medium
+        Difficulty.HARD -> R.string.difficulty_hard
     }

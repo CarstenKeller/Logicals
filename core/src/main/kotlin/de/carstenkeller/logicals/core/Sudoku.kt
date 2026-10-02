@@ -5,22 +5,24 @@ import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
 /** Schwierigkeit über die Anzahl der vorgegebenen Ziffern (weniger = schwerer). */
-enum class SudokuDifficulty(val targetClues: Int) {
-    EASY(38),
-    MEDIUM(31),
-    HARD(25),
-}
+internal val Difficulty.sudokuClues: Int
+    get() = when (this) {
+        Difficulty.EASY -> 38
+        Difficulty.MEDIUM -> 31
+        Difficulty.HARD -> 25
+    }
 
 @Serializable
 @SerialName("sudoku")
 data class SudokuPuzzle(
     val givens: List<Int>,
     val solution: List<Int>,
-    val difficulty: SudokuDifficulty,
+    val difficulty: Difficulty,
 ) : Puzzle() {
     override val kind: PuzzleType get() = PuzzleType.SUDOKU
     override val width: Int get() = 9
     override val height: Int get() = 9
+    override val options: PuzzleOptions get() = PuzzleOptions(difficulty, 9, 9)
 
     override fun isEditable(index: Int): Boolean = givens[index] == 0
 
@@ -153,12 +155,12 @@ object SudokuSolver {
 /** Erzeugt Sudokus mit genau einer Lösung. */
 class SudokuGenerator(private val random: Random = Random.Default) {
 
-    fun generate(difficulty: SudokuDifficulty): SudokuPuzzle {
+    fun generate(difficulty: Difficulty): SudokuPuzzle {
         val solution = requireNotNull(SudokuSolver.solve(IntArray(81), random))
         val grid = solution.copyOf()
         var clues = 81
         for (i in (0 until 81).shuffled(random)) {
-            if (clues <= difficulty.targetClues) break
+            if (clues <= difficulty.sudokuClues) break
             val backup = grid[i]
             grid[i] = 0
             if (SudokuSolver.countSolutions(grid, 2) == 1) {

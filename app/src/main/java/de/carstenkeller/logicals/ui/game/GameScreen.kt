@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -29,7 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,7 +42,10 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.carstenkeller.logicals.R
+import de.carstenkeller.logicals.core.CatsweeperPuzzle
+import de.carstenkeller.logicals.core.FutoshikiPuzzle
 import de.carstenkeller.logicals.core.KakuroCombos
+import de.carstenkeller.logicals.core.KenKenPuzzle
 import de.carstenkeller.logicals.core.KakuroPuzzle
 import de.carstenkeller.logicals.core.SudokuPuzzle
 import de.carstenkeller.logicals.ui.formatDuration
@@ -122,33 +125,84 @@ fun GameScreen(
                             KakuroBoard(puzzle, state, viewModel::select, boardModifier)
                             KakuroHint(puzzle, state)
                         }
+                        is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, boardModifier)
+                        is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, boardModifier)
+                        is CatsweeperPuzzle -> CatsweeperBoard(
+                            puzzle, state, viewModel::catTap, viewModel::catMark, boardModifier,
+                        )
                         null -> Unit
                     }
-                    NumberPad(
-                        enabled = !state.solved && state.selected >= 0,
-                        notesMode = state.notesMode,
-                        onDigit = viewModel::input,
-                        onErase = viewModel::erase,
-                        onToggleNotes = viewModel::toggleNotesMode,
-                    )
+                    if (puzzle is CatsweeperPuzzle) {
+                        CatsweeperBar(
+                            remaining = puzzle.dogs.size - state.entries.count { it == CatsweeperPuzzle.MARKED },
+                            markMode = state.markMode,
+                            enabled = !state.solved && !state.lost,
+                            onToggleMark = viewModel::toggleMarkMode,
+                        )
+                    } else {
+                        NumberPad(
+                            maxDigit = puzzle.maxDigit,
+                            enabled = !state.solved && state.selected >= 0,
+                            notesMode = state.notesMode,
+                            onDigit = viewModel::input,
+                            onErase = viewModel::erase,
+                            onToggleNotes = viewModel::toggleNotesMode,
+                        )
+                    }
                 }
             }
         }
     }
 
-    var solvedDialogDismissed by rememberSaveable { mutableStateOf(false) }
-    if (state.solved && !solvedDialogDismissed) {
+    // Pro Rätselrunde einmal anzeigen; "Nochmal" startet eine neue Runde.
+    var dialogDismissedRound by rememberSaveable { mutableIntStateOf(-1) }
+    if ((state.solved || state.lost) && dialogDismissedRound != state.round) {
         AlertDialog(
-            onDismissRequest = { solvedDialogDismissed = true },
-            title = { Text(stringResource(R.string.solved_title)) },
-            text = { Text(stringResource(R.string.solved_text, formatDuration(elapsed))) },
+            onDismissRequest = { dialogDismissedRound = state.round },
+            title = { Text(stringResource(if (state.lost) R.string.lost_title else R.string.solved_title)) },
+            text = {
+                Text(
+                    if (state.lost) {
+                        stringResource(R.string.lost_text)
+                    } else {
+                        stringResource(R.string.solved_text, formatDuration(elapsed))
+                    },
+                )
+            },
             confirmButton = {
-                TextButton(onClick = onToMenu) { Text(stringResource(R.string.to_menu)) }
+                TextButton(onClick = viewModel::playAgain) { Text(stringResource(R.string.play_again)) }
             },
             dismissButton = {
-                TextButton(onClick = { solvedDialogDismissed = true }) { Text(stringResource(R.string.ok)) }
+                TextButton(onClick = onToMenu) { Text(stringResource(R.string.to_menu)) }
             },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CatsweeperBar(remaining: Int, markMode: Boolean, enabled: Boolean, onToggleMark: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            stringResource(R.string.catsweeper_help),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(
+                selected = markMode,
+                onClick = onToggleMark,
+                enabled = enabled,
+                label = { Text(stringResource(R.string.catsweeper_mark)) },
+            )
+            Spacer(Modifier.weight(1f))
+            Text(stringResource(R.string.catsweeper_remaining, remaining), style = MaterialTheme.typography.titleMedium)
+        }
     }
 }
 
@@ -188,6 +242,7 @@ private fun KakuroHint(puzzle: KakuroPuzzle, state: GameUiState) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NumberPad(
+    maxDigit: Int,
     enabled: Boolean,
     notesMode: Boolean,
     onDigit: (Int) -> Unit,
@@ -201,14 +256,14 @@ private fun NumberPad(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            for (digit in 1..9) {
+            for (digit in 1..maxDigit) {
                 FilledTonalButton(
                     onClick = { onDigit(digit) },
                     enabled = enabled,
                     contentPadding = PaddingValues(0.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .aspectRatio(0.8f),
+                        .height(56.dp),
                 ) {
                     Text(digit.toString(), style = MaterialTheme.typography.titleLarge)
                 }
