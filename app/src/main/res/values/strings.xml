@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Logicals</string>
+    <string name="menu_subtitle">Wähle ein Logikrätsel</string>
+    <string name="sudoku">Sudoku</string>
+    <string name="sudoku_description">9×9-Gitter: Jede Ziffer genau einmal pro Zeile, Spalte und Block.</string>
+    <string name="kakuro">Kakuro</string>
+    <string name="kakuro_description">Zahlenkreuzworträtsel: Ziffern ergeben die Summen, keine Wiederholung pro Folge.</string>
+
+    <string name="back">Zurück</string>
+    <string name="continue_game">Fortsetzen</string>
+    <string name="continue_details">Bisherige Zeit: %1$s</string>
+    <string name="no_saved_game">Kein begonnenes Rätsel vorhanden</string>
+    <string name="new_game">Neues Rätsel</string>
+    <string name="generate">Rätsel generieren</string>
+    <string name="difficulty">Schwierigkeit</string>
+    <string name="difficulty_easy">Leicht</string>
+    <string name="difficulty_medium">Mittel</string>
+    <string name="difficulty_hard">Schwer</string>
+    <string name="kakuro_columns">Spalten: %1$d</string>
+    <string name="kakuro_rows">Zeilen: %1$d</string>
+    <string name="kakuro_size_hint">Inklusive der obersten Zeile und linken Spalte mit Summenfeldern.</string>
+    <string name="discard_title">Begonnenes Rätsel verwerfen?</string>
+    <string name="discard_text">Dein aktuelles Rätsel und die bisherige Zeit gehen verloren.</string>
+    <string name="discard_confirm">Neu beginnen</string>
+    <string name="cancel">Abbrechen</string>
+
+    <string name="generating">Rätsel wird erzeugt …</string>
+    <string name="load_failed">Es ist kein Spielstand vorhanden.</string>
+    <string name="time_label">Zeit</string>
+    <string name="erase">Löschen</string>
+    <string name="notes">Notizen</string>
+    <string name="solved_title">Gelöst!</string>
+    <string name="solved_text">Du hast das Rätsel in %1$s gelöst.</string>
+    <string name="to_menu">Zum Menü</string>
+    <string name="ok">OK</string>
+    <string name="kakuro_not_unique">Hinweis: Für dieses Kakuro konnte in der verfügbaren Zeit keine eindeutige Lösung garantiert werden. Jede regelkonforme Lösung wird anerkannt.</string>
+    <string name="kakuro_combinations">Mögliche Kombinationen: %1$s</string>
+</resources>
