@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "de.carstenkeller.logicals"
+        applicationId = "de.carstenkeller.logicals.puzzles"
         minSdk = 26
         targetSdk = 35
         // In der CI fortlaufende Build-Nummer, lokal 1.
