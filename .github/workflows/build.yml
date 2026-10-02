@@ -33,7 +33,7 @@ jobs:
 
       - name: APK für Release umbenennen
         if: github.event_name != 'pull_request'
-        run: cp app/build/outputs/apk/debug/app-debug.apk logicals.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk logicals-build-${{ github.run_number }}.apk
 
       - name: Als GitHub-Release veröffentlichen
         if: github.event_name != 'pull_request'
@@ -45,5 +45,5 @@ jobs:
           body: |
             Debug-APK aus Commit ${{ github.sha }} (Branch ${{ github.ref_name }}).
             Installation: APK auf dem Handy öffnen und Installation aus unbekannten Quellen erlauben.
-          files: logicals.apk
+          files: logicals-build-${{ github.run_number }}.apk
           make_latest: true

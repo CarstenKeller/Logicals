@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Logicals</string>
+    <string name="version">Version %1$s</string>
     <string name="menu_subtitle">Wähle ein Logikrätsel</string>
     <string name="sudoku">Sudoku</string>
     <string name="sudoku_description">9×9-Gitter: Jede Ziffer genau einmal pro Zeile, Spalte und Block.</string>

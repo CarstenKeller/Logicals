@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import de.carstenkeller.logicals.BuildConfig
 import de.carstenkeller.logicals.R
 import de.carstenkeller.logicals.core.PuzzleType
 import de.carstenkeller.logicals.ui.descriptionRes
@@ -45,6 +46,11 @@ fun MainMenuScreen(onSelect: (PuzzleType) -> Unit) {
                     }
                 }
             }
+            Text(
+                stringResource(R.string.version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
