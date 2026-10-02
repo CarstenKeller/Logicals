@@ -8,7 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
@@ -151,36 +152,37 @@ fun GameScreen(
     }
 }
 
-/** Zeigt für die gewählte Zelle die noch möglichen Ziffernkombinationen ihrer Folgen. */
+/**
+ * Zeigt für die gewählte Zelle die noch möglichen Ziffernkombinationen ihrer Folgen,
+ * je Richtung eine eigene Zeile mit Umbruch, damit lange Listen vollständig lesbar sind.
+ */
 @Composable
 private fun KakuroHint(puzzle: KakuroPuzzle, state: GameUiState) {
     val selected = state.selected
-    val text = if (selected >= 0 && puzzle.isEditable(selected)) {
-        val geometry = puzzle.geometry
-        listOf(geometry.acrossRunOf[selected] to "→", geometry.downRunOf[selected] to "↓")
-            .joinToString("    ") { (runId, arrow) ->
-                val run = geometry.runs[runId]
-                val sum = puzzle.sumOf(run)
-                var used = 0
-                for (c in run.cells) if (state.entries[c] != 0) used = used or (1 shl state.entries[c])
-                val combos = KakuroCombos.of(run.cells.size, sum)
-                    .filter { it and used == used }
-                    .joinToString(" ") { KakuroCombos.digits(it).joinToString("") }
-                "$arrow $sum/${run.cells.size}: ${combos.ifEmpty { "–" }}"
-            }
-    } else {
-        ""
-    }
-    Text(
-        text,
-        style = MaterialTheme.typography.bodySmall,
-        fontFamily = FontFamily.Monospace,
-        maxLines = 2,
-        modifier = Modifier
+    val style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+    Column(
+        Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .height(36.dp),
-    )
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        if (selected < 0 || !puzzle.isEditable(selected)) return@Column
+        val geometry = puzzle.geometry
+        for ((runId, arrow) in listOf(geometry.acrossRunOf[selected] to "→", geometry.downRunOf[selected] to "↓")) {
+            val run = geometry.runs[runId]
+            val sum = puzzle.sumOf(run)
+            var used = 0
+            for (c in run.cells) if (state.entries[c] != 0) used = used or (1 shl state.entries[c])
+            val combos = KakuroCombos.of(run.cells.size, sum)
+                .filter { it and used == used }
+                .joinToString(" ") { KakuroCombos.digits(it).joinToString("") }
+            Row {
+                Text("$arrow ${sum}/${run.cells.size}", style = style, modifier = Modifier.width(64.dp))
+                Text(combos.ifEmpty { "–" }, style = style, modifier = Modifier.weight(1f))
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
