@@ -12,6 +12,8 @@
     <string name="futoshiki_description">Jede Ziffer einmal pro Zeile und Spalte, dazu Größer-/Kleiner-Zeichen zwischen Feldern.</string>
     <string name="kenken">KenKen</string>
     <string name="kenken_description">Jede Ziffer einmal pro Zeile und Spalte; die Zahlen in jedem Käfig ergeben das angegebene Rechenergebnis.</string>
+    <string name="skyscraper">Skyscraper</string>
+    <string name="skyscraper_description">Wolkenkratzer der Höhen 1 bis N, jede Höhe einmal pro Zeile und Spalte. Die Zahlen am Rand sagen, wie viele Häuser man von dort sieht – höhere verdecken niedrigere.</string>
     <string name="catsweeper">Catsweeper</string>
     <string name="catsweeper_description">🐱 Decke die Katzen auf, ohne einen der versteckten Hunde 🐶 zu wecken. Zahlen zeigen, wie viele Hunde eine Katze umzingeln.</string>
 
@@ -33,6 +35,11 @@
     <string name="hint_apply_mark">🦴 Markieren</string>
     <string name="hint_apply_unmark">Knochen entfernen</string>
     <string name="hints_used">Genutzte Hinweise: %1$d</string>
+
+    <string name="theme_title">Darstellung</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
 
     <string name="back">Zurück</string>
     <string name="continue_game">Fortsetzen</string>

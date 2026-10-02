@@ -24,8 +24,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun LogicalsTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun LogicalsTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     val colors = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

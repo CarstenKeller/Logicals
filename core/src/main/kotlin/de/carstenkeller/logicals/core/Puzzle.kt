@@ -24,6 +24,7 @@ enum class PuzzleType(
     KAKURO(hasDifficulty = true, sizeRange = 4..30, rectangular = true, defaultWidth = 10, defaultHeight = 10),
     FUTOSHIKI(hasDifficulty = true, sizeRange = 4..9, rectangular = false, defaultWidth = 6, defaultHeight = 6),
     KENKEN(hasDifficulty = true, sizeRange = 4..9, rectangular = false, defaultWidth = 5, defaultHeight = 5),
+    SKYSCRAPER(hasDifficulty = true, sizeRange = 4..7, rectangular = false, defaultWidth = 5, defaultHeight = 5),
     CATSWEEPER(hasDifficulty = true, sizeRange = 5..30, rectangular = true, defaultWidth = 10, defaultHeight = 14),
 }
 
@@ -94,6 +95,7 @@ object PuzzleFactory {
             PuzzleType.KAKURO -> KakuroGenerator(random).generate(w, h, options.difficulty).puzzle
             PuzzleType.FUTOSHIKI -> FutoshikiGenerator(random).generate(w, options.difficulty)
             PuzzleType.KENKEN -> KenKenGenerator(random).generate(w, options.difficulty)
+            PuzzleType.SKYSCRAPER -> SkyscraperGenerator(random).generate(w, options.difficulty)
             PuzzleType.CATSWEEPER -> CatsweeperGenerator(random).generate(w, h, options.difficulty)
         }
     }

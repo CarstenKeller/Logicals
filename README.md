@@ -4,13 +4,15 @@ Android-App für Logikrätsel (Kotlin, Jetpack Compose).
 
 ## Funktionen
 
-- **Hauptmenü** mit Auswahl der Rätselart: Sudoku, Kakuro, Futoshiki, KenKen und Catsweeper.
+- **Hauptmenü** mit Auswahl der Rätselart: Sudoku, Kakuro, Futoshiki, KenKen, Skyscraper und Catsweeper,
+  dazu die Wahl der Darstellung (System / Hell / Dunkel, Standard: System).
 - Pro Rätselart: **begonnenes Rätsel fortsetzen** oder **neues Rätsel generieren**.
   - Sudoku: Schwierigkeit Leicht / Mittel / Schwer (über Anzahl der Vorgaben, Lösung immer eindeutig).
   - Kakuro: Spalten und Zeilen frei wählbar (4–30, inklusive Summenzeile/-spalte) und Schwierigkeit:
     Leicht = nur einfache Schlüsse nötig, Folgen ≤ 6; Mittel = alle Techniken, Folgen ≤ 6; Schwer = alle Techniken, Folgen ≤ 9.
   - Futoshiki: Größe 4×4 bis 9×9 und Schwierigkeit, Lösung eindeutig.
   - KenKen: Größe 4×4 bis 9×9 und Schwierigkeit, Lösung eindeutig.
+  - Skyscraper: Größe 4×4 bis 7×7 und Schwierigkeit, Lösung eindeutig.
   - Catsweeper (Minesweeper mit Hunden 🐶 statt Bomben, aufgedeckte Felder sind Katzen 🐱):
     Spalten/Zeilen 5–30 und Schwierigkeit (Hundedichte 12 / 16 / 21 %). Der erste Zug ist immer sicher.
     Tippen deckt auf, langes Drücken markiert mit 🦴.
@@ -43,6 +45,8 @@ Generator ergänzen und ein Spielfeld in `app/ui/game` hinzufügen.
   überflüssige Hinweise entfernen; leichtere Stufen erhalten zusätzliche Vorgaben.
 - **KenKen**: zufälliges lateinisches Quadrat, zufällige Käfige; solange die erklärbaren Schritte nicht
   reichen, Rechenart ändern oder Käfig teilen.
+- **Skyscraper**: zufälliges lateinisches Quadrat, alle Randhinweise berechnen, dann erst Vorgaben und danach
+  Randhinweise entfernen, solange die erklärbaren Schritte reichen; leichtere Stufen erhalten Randhinweise zurück.
 - **Catsweeper**: zufällige Hunde; keine Garantie, dass ohne Raten lösbar (wie klassisches Minesweeper).
 - **Kakuro**: Gitterstruktur würfeln und reparieren (keine Folgen der Länge 1, max. 9, zusammenhängend),
   zufällig füllen, anschließend Ziffern per lokaler Suche so anpassen, dass das Rätsel rein durch logisches

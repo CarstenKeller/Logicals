@@ -26,6 +26,7 @@ val PuzzleType.titleRes: Int
         PuzzleType.KAKURO -> R.string.kakuro
         PuzzleType.FUTOSHIKI -> R.string.futoshiki
         PuzzleType.KENKEN -> R.string.kenken
+        PuzzleType.SKYSCRAPER -> R.string.skyscraper
         PuzzleType.CATSWEEPER -> R.string.catsweeper
     }
 
@@ -36,6 +37,7 @@ val PuzzleType.descriptionRes: Int
         PuzzleType.KAKURO -> R.string.kakuro_description
         PuzzleType.FUTOSHIKI -> R.string.futoshiki_description
         PuzzleType.KENKEN -> R.string.kenken_description
+        PuzzleType.SKYSCRAPER -> R.string.skyscraper_description
         PuzzleType.CATSWEEPER -> R.string.catsweeper_description
     }
 

@@ -52,6 +52,7 @@ import de.carstenkeller.logicals.core.Hint
 import de.carstenkeller.logicals.core.HintAction
 import de.carstenkeller.logicals.core.KakuroCombos
 import de.carstenkeller.logicals.core.KenKenPuzzle
+import de.carstenkeller.logicals.core.SkyscraperPuzzle
 import de.carstenkeller.logicals.core.KakuroPuzzle
 import de.carstenkeller.logicals.core.SudokuPuzzle
 import de.carstenkeller.logicals.ui.formatDuration
@@ -139,6 +140,7 @@ fun GameScreen(
                         }
                         is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, boardModifier)
                         is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, boardModifier)
+                        is SkyscraperPuzzle -> SkyscraperBoard(puzzle, state, viewModel::select, boardModifier)
                         is CatsweeperPuzzle -> CatsweeperBoard(
                             puzzle, state, viewModel::catTap, viewModel::catMark, boardModifier,
                         )

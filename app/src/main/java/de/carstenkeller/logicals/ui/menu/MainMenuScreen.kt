@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -18,11 +22,16 @@ import androidx.compose.ui.unit.dp
 import de.carstenkeller.logicals.BuildConfig
 import de.carstenkeller.logicals.R
 import de.carstenkeller.logicals.core.PuzzleType
+import de.carstenkeller.logicals.data.ThemeMode
 import de.carstenkeller.logicals.ui.descriptionRes
 import de.carstenkeller.logicals.ui.titleRes
 
 @Composable
-fun MainMenuScreen(onSelect: (PuzzleType) -> Unit) {
+fun MainMenuScreen(
+    onSelect: (PuzzleType) -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+) {
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -46,11 +55,40 @@ fun MainMenuScreen(onSelect: (PuzzleType) -> Unit) {
                     }
                 }
             }
+            ThemeSelector(themeMode, onThemeModeChange)
             Text(
                 stringResource(R.string.version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeSelector(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleSmall)
+        val options = ThemeMode.entries
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, mode ->
+                SegmentedButton(
+                    selected = mode == selected,
+                    onClick = { onSelect(mode) },
+                    shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                ) {
+                    Text(
+                        stringResource(
+                            when (mode) {
+                                ThemeMode.SYSTEM -> R.string.theme_system
+                                ThemeMode.LIGHT -> R.string.theme_light
+                                ThemeMode.DARK -> R.string.theme_dark
+                            },
+                        ),
+                    )
+                }
+            }
         }
     }
 }

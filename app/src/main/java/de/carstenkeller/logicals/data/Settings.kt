@@ -5,9 +5,18 @@ import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
 
-/** Merkt sich pro Rätselart die zuletzt gewählten Optionen für neue Rätsel. */
+/** Darstellung: dem System folgen oder fest hell/dunkel. */
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+/** Merkt sich die Darstellung und pro Rätselart die zuletzt gewählten Optionen für neue Rätsel. */
 class Settings(context: Context) {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+    var themeMode: ThemeMode
+        get() = prefs.getString("theme_mode", null)
+            ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
+            ?: ThemeMode.SYSTEM
+        set(value) = prefs.edit().putString("theme_mode", value.name).apply()
 
     fun options(type: PuzzleType): PuzzleOptions {
         val key = type.name.lowercase()

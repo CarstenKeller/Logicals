@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
+import de.carstenkeller.logicals.data.ThemeMode
 import de.carstenkeller.logicals.ui.game.GameScreen
 import de.carstenkeller.logicals.ui.menu.MainMenuScreen
 import de.carstenkeller.logicals.ui.menu.PuzzleHomeScreen
@@ -37,11 +38,15 @@ private object Routes {
 }
 
 @Composable
-fun LogicalsApp() {
+fun LogicalsApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     val nav = rememberNavController()
     NavHost(navController = nav, startDestination = Routes.MENU) {
         composable(Routes.MENU) {
-            MainMenuScreen(onSelect = { nav.navigate(Routes.home(it)) })
+            MainMenuScreen(
+                onSelect = { nav.navigate(Routes.home(it)) },
+                themeMode = themeMode,
+                onThemeModeChange = onThemeModeChange,
+            )
         }
         composable(
             Routes.HOME,

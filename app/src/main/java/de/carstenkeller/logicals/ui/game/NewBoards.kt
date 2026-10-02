@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.min
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.FutoshikiPuzzle
 import de.carstenkeller.logicals.core.KenKenPuzzle
+import de.carstenkeller.logicals.core.SkyscraperPuzzle
 
 // ---------------------------------------------------------------------- Hilfen
 
@@ -204,6 +205,65 @@ fun KenKenBoard(
                     color = if (cage.cells.any { it in state.conflicts }) MaterialTheme.colorScheme.error else lineColor,
                     modifier = Modifier.offset(x = cell * (first % n) + 3.dp, y = cell * (first / n) + 2.dp),
                 )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------- Skyscraper
+
+@Composable
+fun SkyscraperBoard(
+    puzzle: SkyscraperPuzzle,
+    state: GameUiState,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val n = puzzle.size
+    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+        // Gitter plus je eine Randzeile/-spalte für die Hinweise.
+        val cell = (min(maxWidth, maxHeight) - 8.dp) / (n + 2)
+        val clueSize = with(LocalDensity.current) { (cell * 0.45f).toSp() }
+        val clueColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+        @Composable
+        fun Clue(value: Int) {
+            Box(Modifier.size(cell), contentAlignment = Alignment.Center) {
+                if (value != 0) Text(value.toString(), fontSize = clueSize, fontWeight = FontWeight.Bold, color = clueColor)
+            }
+        }
+
+        Column {
+            Row {
+                Spacer(Modifier.size(cell))
+                for (c in 0 until n) Clue(puzzle.top[c])
+                Spacer(Modifier.size(cell))
+            }
+            for (r in 0 until n) {
+                Row {
+                    Clue(puzzle.left[r])
+                    for (c in 0 until n) {
+                        val i = r * n + c
+                        val (background, textColor) =
+                            numberCellColors(puzzle.isEditable(i), i, state, sameLine(state.selected, i, n))
+                        NumberCell(
+                            size = cell,
+                            value = state.entries[i],
+                            notes = state.notes[i],
+                            background = background,
+                            textColor = textColor,
+                            bold = !puzzle.isEditable(i),
+                            border = MaterialTheme.colorScheme.outline,
+                            onClick = { onSelect(i) },
+                        )
+                    }
+                    Clue(puzzle.right[r])
+                }
+            }
+            Row {
+                Spacer(Modifier.size(cell))
+                for (c in 0 until n) Clue(puzzle.bottom[c])
+                Spacer(Modifier.size(cell))
             }
         }
     }

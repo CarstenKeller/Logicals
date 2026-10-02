@@ -28,6 +28,7 @@ object HintFinder {
             is KakuroPuzzle -> KakuroHinter(puzzle, entries).find()
             is FutoshikiPuzzle -> FutoshikiHinter(puzzle, entries).find()
             is KenKenPuzzle -> KenKenHinter(puzzle, entries).find()
+            is SkyscraperPuzzle -> SkyscraperHinter(puzzle, entries).find()
             is CatsweeperPuzzle -> CatsweeperHinter(puzzle, entries).find()
         }
     }
@@ -44,6 +45,7 @@ internal fun logicalStuckCell(puzzle: Puzzle): Int {
         is KakuroPuzzle -> KakuroHinter(puzzle, entries).solveLogically()
         is FutoshikiPuzzle -> FutoshikiHinter(puzzle, entries).solveLogically()
         is KenKenPuzzle -> KenKenHinter(puzzle, entries).solveLogically()
+        is SkyscraperPuzzle -> SkyscraperHinter(puzzle, entries).solveLogically()
         is CatsweeperPuzzle -> -1
     }
 }
@@ -465,6 +467,114 @@ internal class KenKenHinter(private val p: KenKenPuzzle, entries: IntArray) : Nu
                     "Andere Ziffern fallen in diesem Käfig weg."
             }
             eliminate(removals, text, cage.cells.toSet())?.let { return it }
+        }
+        return null
+    }
+}
+
+// ---------------------------------------------------------------------- Skyscraper
+
+internal class SkyscraperHinter(private val p: SkyscraperPuzzle, entries: IntArray) : NumberHinter(
+    p, entries, latinUnits(p.size), p.solution, p.solution,
+) {
+    private val n = p.size
+
+    override fun techniques(): List<() -> HintStep?> = listOf(::clueBounds, ::arrangements)
+
+    private fun clueText(line: SkyscraperLine): String = listOfNotNull(
+        if (line.startClue != 0) "${line.startClue} von ${line.startSide}" else null,
+        if (line.endClue != 0) "${line.endClue} von ${line.endSide}" else null,
+    ).joinToString(", ")
+
+    /**
+     * Randhinweis c: Das Feld an Position i (ab 0, vom Hinweis aus) darf höchstens
+     * n − c + 1 + i hoch sein, sonst sind zu wenige Häuser sichtbar. Hinweis 1: vorne steht n.
+     */
+    private fun clueBounds(): HintStep? {
+        for (line in p.lines) {
+            for ((clue, cells, side) in listOf(
+                Triple(line.startClue, line.cells.toList(), line.startSide),
+                Triple(line.endClue, line.cells.reversed(), line.endSide),
+            )) {
+                if (clue == 0) continue
+                if (clue == 1) {
+                    val first = cells[0]
+                    eliminate(
+                        mapOf(first to (all and (1 shl n).inv())),
+                        "Von $side ist in ${line.name} nur 1 Haus zu sehen. Das geht nur, wenn das vorderste " +
+                            "Haus das höchste ist – dort steht also die $n.",
+                        line.cells.toSet(),
+                    )?.let { return it }
+                    continue
+                }
+                for (i in cells.indices) {
+                    val max = n - clue + 1 + i
+                    if (max >= n) break
+                    val removeMask = all and ((1 shl (max + 1)) - 1).inv()
+                    val pos = i + 1
+                    val before = when (i) {
+                        0 -> "nur dieses"
+                        1 -> "höchstens das eine davor, dieses"
+                        else -> "höchstens die $i davor, dieses"
+                    }
+                    eliminate(
+                        mapOf(cells[i] to removeMask),
+                        "Von $side sind in ${line.name} $clue Häuser zu sehen. Das $pos. Haus von dort darf " +
+                            "höchstens $max hoch sein: Wäre es höher, könnte man $before " +
+                            "und die noch höheren dahinter sehen – zusammen weniger als $clue.",
+                        line.cells.toSet(),
+                    )?.let { return it }
+                }
+            }
+        }
+        return null
+    }
+
+    /** Alle Anordnungen einer Linie, die zu Kandidaten und Randhinweisen passen. */
+    private fun arrangementsOf(line: SkyscraperLine): List<IntArray> {
+        val masks = line.cells.map { cand(it) }
+        val result = ArrayList<IntArray>()
+        val current = IntArray(n)
+        fun rec(pos: Int, used: Int) {
+            if (pos == n) {
+                if (line.accepts(current.toList())) result += current.copyOf()
+                return
+            }
+            for (d in 1..n) {
+                val bit = 1 shl d
+                if (used and bit != 0 || masks[pos] and bit == 0) continue
+                current[pos] = d
+                rec(pos + 1, used or bit)
+            }
+        }
+        rec(0, 0)
+        return result
+    }
+
+    private fun arrangements(): HintStep? {
+        // Linien mit wenigen passenden Anordnungen zuerst – die sind am leichtesten zu sehen.
+        val order = p.lines
+            .filter { line -> line.hasClue && line.cells.any { isOpen(it) } }
+            .map { it to arrangementsOf(it) }
+            .filter { it.second.isNotEmpty() }
+            .sortedBy { it.second.size }
+        for ((line, options) in order) {
+            val removals = HashMap<Int, Int>()
+            line.cells.forEachIndexed { pos, c ->
+                if (!isOpen(c)) return@forEachIndexed
+                var allowed = 0
+                for (o in options) allowed = allowed or (1 shl o[pos])
+                removals[c] = all and allowed.inv()
+            }
+            val shown = options.take(6).joinToString(", ") { it.joinToString("") } +
+                if (options.size > 6) " (und ${options.size - 6} weitere)" else ""
+            val dir = if (line.name.startsWith("Zeile")) "von links nach rechts" else "von oben nach unten"
+            eliminate(
+                removals,
+                "${line.name} (sichtbar: ${clueText(line)}): Zu den Hinweisen und den noch möglichen Ziffern " +
+                    "passen nur diese Anordnungen ($dir gelesen): $shown. Andere Ziffern fallen dort weg.",
+                line.cells.toSet(),
+            )?.let { return it }
         }
         return null
     }
