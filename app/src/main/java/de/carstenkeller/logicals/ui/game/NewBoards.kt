@@ -43,7 +43,7 @@ private fun numberCellColors(
     val colors = MaterialTheme.colorScheme
     val value = state.entries[index]
     val selectedValue = if (state.selected >= 0) state.entries[state.selected] else 0
-    val background = when {
+    val background = hintBackground(state, index) ?: when {
         index == state.selected -> colors.primaryContainer
         value != 0 && value == selectedValue -> colors.secondaryContainer
         related -> colors.surfaceVariant
@@ -243,6 +243,7 @@ fun CatsweeperBoard(
                     for (c in 0 until puzzle.width) {
                         val i = r * puzzle.width + c
                         CatCell(
+                            highlight = hintBackground(state, i),
                             entry = state.entries[i],
                             dog = puzzle.isDog(i),
                             count = puzzle.dogCounts[i],
@@ -267,6 +268,7 @@ fun CatsweeperBoard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CatCell(
+    highlight: Color?,
     entry: Int,
     dog: Boolean,
     count: Int,
@@ -282,7 +284,7 @@ private fun CatCell(
     onLongPress: () -> Unit,
 ) {
     val revealed = entry == CatsweeperPuzzle.REVEALED
-    val background = when {
+    val background = highlight ?: when {
         revealed && dog -> caughtColor
         revealed -> revealedColor
         else -> hiddenColor

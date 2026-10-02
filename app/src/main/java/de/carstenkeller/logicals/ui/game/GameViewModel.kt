@@ -8,6 +8,9 @@ import androidx.lifecycle.viewModelScope
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.GameState
+import de.carstenkeller.logicals.core.Hint
+import de.carstenkeller.logicals.core.HintAction
+import de.carstenkeller.logicals.core.HintFinder
 import de.carstenkeller.logicals.core.Puzzle
 import de.carstenkeller.logicals.core.PuzzleFactory
 import de.carstenkeller.logicals.core.PuzzleOptions
@@ -41,6 +44,10 @@ data class GameUiState(
     val lost: Boolean = false,
     /** Zählt neu gestartete Rätsel, damit Dialoge pro Rätsel neu erscheinen. */
     val round: Int = 0,
+    /** Aktuell angezeigter Hinweis. */
+    val hint: Hint? = null,
+    val hintLoading: Boolean = false,
+    val hintsUsed: Int = 0,
 )
 
 class GameViewModel(
@@ -111,6 +118,7 @@ class GameViewModel(
             solved = game.puzzle.isSolved(entries),
             lost = game.puzzle.isLost(entries),
             round = round,
+            hintsUsed = game.hintsUsed,
         )
         if (screenActive) startTimer()
     }
@@ -236,6 +244,57 @@ class GameViewModel(
         applyEntries(s, next.toList(), s.notes)
     }
 
+    // ------------------------------------------------------------------ Hinweise
+
+    fun requestHint() {
+        val s = _state.value
+        val puzzle = s.puzzle ?: return
+        if (s.solved || s.lost || s.hintLoading) return
+        _state.value = s.copy(hintLoading = true)
+        val entries = s.entries.toIntArray()
+        viewModelScope.launch {
+            val hint = withContext(Dispatchers.Default) { HintFinder.find(puzzle, entries) }
+            _state.update {
+                // Inzwischen geänderter Stand: Hinweis verwerfen.
+                if (it.entries != s.entries || it.puzzle != puzzle) return@update it.copy(hintLoading = false)
+                it.copy(
+                    hint = hint,
+                    hintLoading = false,
+                    hintsUsed = if (hint != null) it.hintsUsed + 1 else it.hintsUsed,
+                    selected = if (hint != null && puzzle.isEditable(hint.cell) && puzzle !is CatsweeperPuzzle) {
+                        hint.cell
+                    } else {
+                        it.selected
+                    },
+                )
+            }
+            persist()
+        }
+    }
+
+    fun dismissHint() = _state.update { it.copy(hint = null) }
+
+    /** Führt die vorgeschlagene Aktion des Hinweises aus. */
+    fun applyHint() {
+        val s = _state.value
+        val hint = s.hint ?: return
+        val puzzle = s.puzzle ?: return
+        _state.value = s.copy(hint = null)
+        when (hint.action) {
+            HintAction.PLACE -> {
+                val entries = s.entries.toMutableList().also { it[hint.cell] = hint.value }
+                val notes = s.notes.toMutableList().also { it[hint.cell] = 0 }
+                applyEntries(_state.value, entries, notes)
+            }
+            HintAction.CLEAR -> {
+                val entries = s.entries.toMutableList().also { it[hint.cell] = 0 }
+                applyEntries(_state.value, entries, s.notes)
+            }
+            HintAction.REVEAL -> if (puzzle is CatsweeperPuzzle) catReveal(hint.cell)
+            HintAction.MARK, HintAction.UNMARK -> if (puzzle is CatsweeperPuzzle) catMark(hint.cell)
+        }
+    }
+
     // ------------------------------------------------------------------ gemeinsam
 
     private fun applyEntries(s: GameUiState, entries: List<Int>, notes: List<Int>) {
@@ -244,6 +303,7 @@ class GameViewModel(
         val solved = puzzle.isSolved(array)
         val lost = !solved && puzzle.isLost(array)
         _state.value = s.copy(
+            hint = null,
             entries = entries,
             notes = notes,
             conflicts = puzzle.conflicts(array),
@@ -263,7 +323,7 @@ class GameViewModel(
         val s = _state.value
         val puzzle = s.puzzle ?: return
         if (s.solved || s.lost) return
-        repository.save(GameState(puzzle, s.entries, s.notes, currentElapsed()))
+        repository.save(GameState(puzzle, s.entries, s.notes, currentElapsed(), s.hintsUsed))
     }
 
     private companion object {

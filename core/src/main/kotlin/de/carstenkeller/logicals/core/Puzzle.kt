@@ -21,7 +21,7 @@ enum class PuzzleType(
     val defaultHeight: Int,
 ) {
     SUDOKU(hasDifficulty = true, sizeRange = null, rectangular = false, defaultWidth = 9, defaultHeight = 9),
-    KAKURO(hasDifficulty = false, sizeRange = 4..30, rectangular = true, defaultWidth = 10, defaultHeight = 10),
+    KAKURO(hasDifficulty = true, sizeRange = 4..30, rectangular = true, defaultWidth = 10, defaultHeight = 10),
     FUTOSHIKI(hasDifficulty = true, sizeRange = 4..9, rectangular = false, defaultWidth = 6, defaultHeight = 6),
     KENKEN(hasDifficulty = true, sizeRange = 4..9, rectangular = false, defaultWidth = 5, defaultHeight = 5),
     CATSWEEPER(hasDifficulty = true, sizeRange = 5..30, rectangular = true, defaultWidth = 10, defaultHeight = 14),
@@ -91,7 +91,7 @@ object PuzzleFactory {
         }
         return when (type) {
             PuzzleType.SUDOKU -> SudokuGenerator(random).generate(options.difficulty)
-            PuzzleType.KAKURO -> KakuroGenerator(random).generate(w, h).puzzle
+            PuzzleType.KAKURO -> KakuroGenerator(random).generate(w, h, options.difficulty).puzzle
             PuzzleType.FUTOSHIKI -> FutoshikiGenerator(random).generate(w, options.difficulty)
             PuzzleType.KENKEN -> KenKenGenerator(random).generate(w, options.difficulty)
             PuzzleType.CATSWEEPER -> CatsweeperGenerator(random).generate(w, h, options.difficulty)
@@ -107,6 +107,8 @@ data class GameState(
     /** Notizen je Zelle als Bitmaske (Bit n = Ziffer n). */
     val notes: List<Int>,
     val elapsedMillis: Long,
+    /** Anzahl angeforderter Hinweise (ältere Spielstände: 0). */
+    val hintsUsed: Int = 0,
 ) {
     companion object {
         fun start(puzzle: Puzzle): GameState = GameState(

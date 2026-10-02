@@ -1,6 +1,8 @@
 package de.carstenkeller.logicals.ui.game
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -44,6 +48,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import de.carstenkeller.logicals.R
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.FutoshikiPuzzle
+import de.carstenkeller.logicals.core.Hint
+import de.carstenkeller.logicals.core.HintAction
 import de.carstenkeller.logicals.core.KakuroCombos
 import de.carstenkeller.logicals.core.KenKenPuzzle
 import de.carstenkeller.logicals.core.KakuroPuzzle
@@ -74,6 +80,12 @@ fun GameScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                    }
+                },
+                actions = {
+                    val canHint = state.puzzle != null && !state.solved && !state.lost && !state.hintLoading
+                    TextButton(onClick = viewModel::requestHint, enabled = canHint) {
+                        Text("💡 " + stringResource(R.string.hint))
                     }
                 },
             )
@@ -123,7 +135,7 @@ fun GameScreen(
                         is SudokuPuzzle -> SudokuBoard(puzzle, state, viewModel::select, boardModifier)
                         is KakuroPuzzle -> {
                             KakuroBoard(puzzle, state, viewModel::select, boardModifier)
-                            KakuroHint(puzzle, state)
+                            if (state.hint == null) KakuroHint(puzzle, state)
                         }
                         is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, boardModifier)
                         is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, boardModifier)
@@ -131,6 +143,9 @@ fun GameScreen(
                             puzzle, state, viewModel::catTap, viewModel::catMark, boardModifier,
                         )
                         null -> Unit
+                    }
+                    state.hint?.let { hint ->
+                        HintCard(hint, onApply = viewModel::applyHint, onClose = viewModel::dismissHint)
                     }
                     if (puzzle is CatsweeperPuzzle) {
                         CatsweeperBar(
@@ -161,13 +176,16 @@ fun GameScreen(
             onDismissRequest = { dialogDismissedRound = state.round },
             title = { Text(stringResource(if (state.lost) R.string.lost_title else R.string.solved_title)) },
             text = {
-                Text(
-                    if (state.lost) {
-                        stringResource(R.string.lost_text)
-                    } else {
-                        stringResource(R.string.solved_text, formatDuration(elapsed))
-                    },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        if (state.lost) {
+                            stringResource(R.string.lost_text)
+                        } else {
+                            stringResource(R.string.solved_text, formatDuration(elapsed))
+                        },
+                    )
+                    if (state.hintsUsed > 0) Text(stringResource(R.string.hints_used, state.hintsUsed))
+                }
             },
             confirmButton = {
                 TextButton(onClick = viewModel::playAgain) { Text(stringResource(R.string.play_again)) }
@@ -176,6 +194,44 @@ fun GameScreen(
                 TextButton(onClick = onToMenu) { Text(stringResource(R.string.to_menu)) }
             },
         )
+    }
+}
+
+/** Erklärung zum Hinweis mit Aktion; der Text ist scrollbar, damit das Spielfeld sichtbar bleibt. */
+@Composable
+private fun HintCard(hint: Hint, onApply: () -> Unit, onClose: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("💡 " + hint.title, style = MaterialTheme.typography.titleMedium)
+            Column(
+                Modifier
+                    .heightIn(max = 150.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                for (line in hint.steps) Text(line, style = MaterialTheme.typography.bodyMedium)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onClose) { Text(stringResource(R.string.hint_close)) }
+                Spacer(Modifier.weight(1f))
+                FilledTonalButton(onClick = onApply) {
+                    Text(
+                        when (hint.action) {
+                            HintAction.PLACE -> stringResource(R.string.hint_apply_place, hint.value)
+                            HintAction.CLEAR -> stringResource(R.string.hint_apply_clear)
+                            HintAction.REVEAL -> stringResource(R.string.hint_apply_reveal)
+                            HintAction.MARK -> stringResource(R.string.hint_apply_mark)
+                            HintAction.UNMARK -> stringResource(R.string.hint_apply_unmark)
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 

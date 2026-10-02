@@ -65,13 +65,44 @@ data class KenKenPuzzle(
     }
 }
 
+/**
+ * Alle Wertetupel (in Reihenfolge von [KenKenCage.cells]), die das Rechenziel erfüllen
+ * und keine Ziffer doppelt in einer Zeile oder Spalte des Käfigs haben.
+ */
+internal fun kenkenTuples(cage: KenKenCage, n: Int): List<IntArray> {
+    val cells = cage.cells
+    val result = ArrayList<IntArray>()
+    val current = IntArray(cells.size)
+    fun rec(p: Int) {
+        if (p == cells.size) {
+            if (cage.op.apply(current.toList()) == cage.target) result += current.copyOf()
+            return
+        }
+        for (v in 1..n) {
+            var ok = true
+            for (q in 0 until p) {
+                val sameLine = cells[q] / n == cells[p] / n || cells[q] % n == cells[p] % n
+                if (sameLine && current[q] == v) {
+                    ok = false
+                    break
+                }
+            }
+            if (!ok) continue
+            current[p] = v
+            rec(p + 1)
+        }
+    }
+    rec(0)
+    return result
+}
+
 /** Zählt Lösungen eines KenKen: Pro Käfig werden alle passenden Wertetupel vorberechnet. */
 internal class KenKenSolver(private val n: Int, private val cages: List<KenKenCage>) {
     class Result(val count: Int, val solutions: List<IntArray>, val aborted: Boolean)
 
     private val cageOf = IntArray(n * n).also { arr -> cages.forEachIndexed { k, c -> c.cells.forEach { arr[it] = k } } }
     private val posInCage = IntArray(n * n).also { arr -> cages.forEach { c -> c.cells.forEachIndexed { p, cell -> arr[cell] = p } } }
-    private val tuples: List<List<IntArray>> = cages.map { validTuples(it) }
+    private val tuples: List<List<IntArray>> = cages.map { kenkenTuples(it, n) }
 
     private val grid = IntArray(n * n)
     private val rows = IntArray(n)
@@ -80,33 +111,6 @@ internal class KenKenSolver(private val n: Int, private val cages: List<KenKenCa
     private var nodes = 0L
     private var nodeLimit = 0L
     private var aborted = false
-
-    private fun validTuples(cage: KenKenCage): List<IntArray> {
-        val cells = cage.cells
-        val result = ArrayList<IntArray>()
-        val current = IntArray(cells.size)
-        fun rec(p: Int) {
-            if (p == cells.size) {
-                if (cage.op.apply(current.toList()) == cage.target) result += current.copyOf()
-                return
-            }
-            for (v in 1..n) {
-                var ok = true
-                for (q in 0 until p) {
-                    val sameLine = cells[q] / n == cells[p] / n || cells[q] % n == cells[p] % n
-                    if (sameLine && current[q] == v) {
-                        ok = false
-                        break
-                    }
-                }
-                if (!ok) continue
-                current[p] = v
-                rec(p + 1)
-            }
-        }
-        rec(0)
-        return result
-    }
 
     fun solve(limit: Int = 2, nodeLimit: Long = 300_000L): Result {
         grid.fill(0)
@@ -183,8 +187,8 @@ internal class KenKenSolver(private val n: Int, private val cages: List<KenKenCa
  * Erzeugt KenKens mit eindeutiger Lösung.
  *
  * Ablauf: zufälliges lateinisches Quadrat → zufällige zusammenhängende Käfige →
- * passende Rechenarten wählen → solange mehrdeutig, an einer abweichenden Zelle die
- * Rechenart ändern oder den Käfig teilen. Die Schwierigkeit steuert Käfiggröße und
+ * passende Rechenarten wählen → solange die erklärbaren Hinweis-Schritte nicht alles lösen,
+ * am Feld, an dem sie hängen bleiben, die Rechenart ändern oder den Käfig teilen. Die Schwierigkeit steuert Käfiggröße und
  * Anteil an Einzelfeldern (heuristisch).
  */
 class KenKenGenerator(private val random: Random = Random.Default) {
@@ -211,14 +215,10 @@ class KenKenGenerator(private val random: Random = Random.Default) {
         val cages = groups.map { makeCage(it, solution, difficulty) }.toMutableList()
 
         repeat(n * n * 2) {
-            val result = KenKenSolver(n, cages).solve()
-            if (result.aborted) return null
-            if (result.count == 1) {
-                return KenKenPuzzle(n, cages.toList(), solution.toList(), difficulty)
-            }
-            val other = result.solutions.first { !it.contentEquals(solution) }
-            val diff = solution.indices.filter { solution[it] != other[it] }
-            val cell = diff.random(random)
+            val candidate = KenKenPuzzle(n, cages.toList(), solution.toList(), difficulty)
+            // Fertig, wenn die erklärbaren Hinweis-Schritte alles lösen (dann ist es auch eindeutig).
+            val cell = logicalStuckCell(candidate)
+            if (cell == -1) return candidate
             val k = cages.indexOfFirst { cell in it.cells }
             val cage = cages[k]
             val alternatives = opsFor(cage.cells.map { solution[it] }).filter { it != cage.op }

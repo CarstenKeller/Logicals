@@ -19,7 +19,27 @@ class KakuroGenerator(private val random: Random = Random.Default) {
 
     class Generated(val puzzle: KakuroPuzzle, val unique: Boolean)
 
-    fun generate(width: Int, height: Int, timeBudgetMillis: Long = 20_000L): Generated {
+    private var level = Difficulty.HARD
+    private var puzzleDifficulty = Difficulty.HARD
+    private var maxRun = 9
+    private var preferredRun = 6
+
+    fun generate(
+        width: Int,
+        height: Int,
+        difficulty: Difficulty = Difficulty.HARD,
+        timeBudgetMillis: Long = 20_000L,
+    ): Generated {
+        // Leicht: nur einfache Schlüsse nötig. Mittel und Schwer: alle Techniken; Mittel
+        // aber mit kürzeren Folgen (weniger Kombinationen je Summe).
+        level = if (difficulty == Difficulty.EASY) Difficulty.EASY else Difficulty.HARD
+        puzzleDifficulty = difficulty
+        // Kürzere Folgen haben weniger Kombinationen und sind leichter zu durchschauen.
+        when (difficulty) {
+            Difficulty.EASY -> { maxRun = 6; preferredRun = 6 }
+            Difficulty.MEDIUM -> { maxRun = 6; preferredRun = 6 }
+            Difficulty.HARD -> { maxRun = 9; preferredRun = 6 }
+        }
         require(width in MIN_SIZE..MAX_SIZE && height in MIN_SIZE..MAX_SIZE) {
             "Größe muss zwischen $MIN_SIZE und $MAX_SIZE liegen"
         }
@@ -36,7 +56,12 @@ class KakuroGenerator(private val random: Random = Random.Default) {
                     fallback = puzzle
                 }
             }
-            if (System.nanoTime() > deadline && fallback != null) return Generated(fallback.copy(unique = false), false)
+            if (System.nanoTime() > deadline) {
+                if (fallback != null) return Generated(fallback.copy(unique = false), false)
+                // Notbremse: die Struktur des schweren Modus gelingt praktisch immer.
+                maxRun = 9
+                preferredRun = 6
+            }
         }
     }
 
@@ -57,10 +82,10 @@ class KakuroGenerator(private val random: Random = Random.Default) {
                 white[j] = false
             }
         }
-        repeat(400) {
+        repeat(w * h * 4) {
             if (!repairStep(w, h, white)) {
                 val count = white.count { it }
-                return if (count >= interior * 0.45 && count >= 4) white else null
+                return if (count >= interior * 0.4 && count >= 4) white else null
             }
         }
         return null
@@ -72,7 +97,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
         // Zu lange Folgen teilen.
         for (run in geometry.runs) {
             val len = run.cells.size
-            if (len > MAX_RUN || (len > PREFERRED_RUN && random.nextInt(3) == 0)) {
+            if (len >= 5 && (len > maxRun || (len > preferredRun && random.nextInt(3) == 0))) {
                 val pos = 2 + random.nextInt(len - 4)
                 white[run.cells[pos]] = false
                 return true
@@ -210,7 +235,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
 
     /** Zellen, die logisches Schließen nicht eindeutig bestimmt. */
     private fun unresolvedCells(geometry: KakuroGeometry, fill: IntArray): List<Int> {
-        val domains = KakuroSolver(geometry, sums(geometry, fill)).deduce()
+        val domains = KakuroSolver(geometry, sums(geometry, fill)).deduce(level)
             ?: error("Propagation widerspricht der eigenen Lösung")
         return geometry.white.indices.filter { geometry.white[it] && Integer.bitCount(domains[it]) != 1 }
     }
@@ -262,14 +287,12 @@ class KakuroGenerator(private val random: Random = Random.Default) {
         val cells = List(fill.size) { i ->
             if (geometry.white[i]) KakuroCell(white = true) else KakuroCell(false, across[i], down[i])
         }
-        return KakuroPuzzle(geometry.width, geometry.height, cells, fill.toList())
+        return KakuroPuzzle(geometry.width, geometry.height, cells, fill.toList(), difficulty = puzzleDifficulty)
     }
 
     companion object {
         val MIN_SIZE = PuzzleType.KAKURO.sizeRange!!.first
         val MAX_SIZE = PuzzleType.KAKURO.sizeRange!!.last
-        private const val MAX_RUN = 9
-        private const val PREFERRED_RUN = 6
         private const val MAX_STALE_STEPS = 20_000
         private const val ALL = 0x3FE
     }

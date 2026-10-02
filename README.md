@@ -7,7 +7,8 @@ Android-App für Logikrätsel (Kotlin, Jetpack Compose).
 - **Hauptmenü** mit Auswahl der Rätselart: Sudoku, Kakuro, Futoshiki, KenKen und Catsweeper.
 - Pro Rätselart: **begonnenes Rätsel fortsetzen** oder **neues Rätsel generieren**.
   - Sudoku: Schwierigkeit Leicht / Mittel / Schwer (über Anzahl der Vorgaben, Lösung immer eindeutig).
-  - Kakuro: Spalten und Zeilen frei wählbar (4–30, inklusive Summenzeile/-spalte).
+  - Kakuro: Spalten und Zeilen frei wählbar (4–30, inklusive Summenzeile/-spalte) und Schwierigkeit:
+    Leicht = nur einfache Schlüsse nötig, Folgen ≤ 6; Mittel = alle Techniken, Folgen ≤ 6; Schwer = alle Techniken, Folgen ≤ 9.
   - Futoshiki: Größe 4×4 bis 9×9 und Schwierigkeit, Lösung eindeutig.
   - KenKen: Größe 4×4 bis 9×9 und Schwierigkeit, Lösung eindeutig.
   - Catsweeper (Minesweeper mit Hunden 🐶 statt Bomben, aufgedeckte Felder sind Katzen 🐱):
@@ -18,6 +19,9 @@ Android-App für Logikrätsel (Kotlin, Jetpack Compose).
 - Kakuro-Spielfeld lässt sich in **alle Richtungen verschieben** (auch diagonal, mit Schwung),
   wenn es nicht auf den Bildschirm passt.
 - Notizmodus, Konfliktmarkierung, Hilfszeile mit möglichen Kakuro-Kombinationen.
+- **💡 Hinweise** für alle Rätsel: nächster Schritt mit Erklärung, wie man selbst darauf kommt, und
+  Hervorhebung der beteiligten Felder. Falsche Einträge werden zuerst gemeldet. Findet die eingebaute
+  Logik keinen erklärbaren Schritt (z. B. bei schweren Sudokus), wird das offen gesagt und das Feld verraten.
 - Spielstand wird nach jeder Eingabe automatisch gespeichert (JSON im App-Speicher).
 
 ## Aufbau
@@ -32,10 +36,13 @@ Generator ergänzen und ein Spielfeld in `app/ui/game` hinzufügen.
 
 ### Generatoren
 
-- **Sudoku**: zufällige vollständige Lösung, dann Ziffern entfernen, solange die Lösung eindeutig bleibt.
-- **Futoshiki**: zufälliges lateinisches Quadrat, Ungleichungen/Vorgaben ergänzen bis eindeutig, dann
+- **Sudoku**: zufällige vollständige Lösung, dann Ziffern entfernen, solange das Rätsel mit den
+  erklärbaren Hinweis-Schritten lösbar bleibt (damit auch eindeutig).
+- **Futoshiki**: zufälliges lateinisches Quadrat, Ungleichungen/Vorgaben ergänzen, bis die erklärbaren
+  Hinweis-Schritte es lösen, dann
   überflüssige Hinweise entfernen; leichtere Stufen erhalten zusätzliche Vorgaben.
-- **KenKen**: zufälliges lateinisches Quadrat, zufällige Käfige; bei Mehrdeutigkeit Rechenart ändern oder Käfig teilen.
+- **KenKen**: zufälliges lateinisches Quadrat, zufällige Käfige; solange die erklärbaren Schritte nicht
+  reichen, Rechenart ändern oder Käfig teilen.
 - **Catsweeper**: zufällige Hunde; keine Garantie, dass ohne Raten lösbar (wie klassisches Minesweeper).
 - **Kakuro**: Gitterstruktur würfeln und reparieren (keine Folgen der Länge 1, max. 9, zusammenhängend),
   zufällig füllen, anschließend Ziffern per lokaler Suche so anpassen, dass das Rätsel rein durch logisches

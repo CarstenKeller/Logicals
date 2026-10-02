@@ -152,23 +152,27 @@ object SudokuSolver {
     }
 }
 
-/** Erzeugt Sudokus mit genau einer Lösung. */
+/**
+ * Erzeugt Sudokus, die sich allein mit erklärbaren Schritten lösen lassen (versteckte und
+ * nackte Einzelne, Block-/Linien-Ausschluss, nackte Paare) – damit gibt es immer genau eine
+ * Lösung und jeder Hinweis kann begründet werden.
+ */
 class SudokuGenerator(private val random: Random = Random.Default) {
 
     fun generate(difficulty: Difficulty): SudokuPuzzle {
-        val solution = requireNotNull(SudokuSolver.solve(IntArray(81), random))
-        val grid = solution.copyOf()
+        val solution = requireNotNull(SudokuSolver.solve(IntArray(81), random)).toList()
+        val grid = solution.toIntArray()
         var clues = 81
         for (i in (0 until 81).shuffled(random)) {
             if (clues <= difficulty.sudokuClues) break
             val backup = grid[i]
             grid[i] = 0
-            if (SudokuSolver.countSolutions(grid, 2) == 1) {
+            if (logicalStuckCell(SudokuPuzzle(grid.toList(), solution, difficulty)) == -1) {
                 clues--
             } else {
                 grid[i] = backup
             }
         }
-        return SudokuPuzzle(grid.toList(), solution.toList(), difficulty)
+        return SudokuPuzzle(grid.toList(), solution, difficulty)
     }
 }

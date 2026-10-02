@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -55,7 +56,7 @@ fun SudokuBoard(
                             val i = r * 9 + c
                             val value = state.entries[i]
                             val related = selected >= 0 && isRelated(selected, i)
-                            val background = when {
+                            val background = hintBackground(state, i) ?: when {
                                 i == selected -> colors.primaryContainer
                                 value != 0 && value == selectedValue -> colors.secondaryContainer
                                 related -> colors.surfaceVariant
@@ -144,7 +145,7 @@ fun KakuroBoard(
                                 size = KakuroCellSize,
                                 value = state.entries[i],
                                 notes = state.notes[i],
-                                background = when {
+                                background = hintBackground(state, i) ?: when {
                                     i == selected -> colors.primaryContainer
                                     inRun -> colors.surfaceVariant
                                     else -> colors.surface
@@ -214,6 +215,18 @@ private fun ClueCell(across: Int, down: Int, background: Color, textColor: Color
 }
 
 // ---------------------------------------------------------------------- gemeinsam
+
+/** Hervorhebung für den aktuell angezeigten Hinweis (Zielfeld kräftig, beteiligte Felder hell). */
+@Composable
+internal fun hintBackground(state: GameUiState, index: Int): Color? {
+    val hint = state.hint ?: return null
+    val colors = MaterialTheme.colorScheme
+    return when (index) {
+        hint.cell -> colors.tertiary.copy(alpha = 0.55f).compositeOver(colors.surface)
+        in hint.related -> colors.tertiaryContainer.copy(alpha = 0.7f).compositeOver(colors.surface)
+        else -> null
+    }
+}
 
 @Composable
 internal fun NumberCell(

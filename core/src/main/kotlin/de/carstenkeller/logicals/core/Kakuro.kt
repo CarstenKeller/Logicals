@@ -75,9 +75,11 @@ data class KakuroPuzzle(
     val solution: List<Int>,
     /** false, wenn der Generator keine eindeutige Lösung garantieren konnte. */
     val unique: Boolean = true,
+    /** Ältere Spielstände ohne Angabe stammen aus dem bisherigen (schweren) Generator. */
+    val difficulty: Difficulty = Difficulty.HARD,
 ) : Puzzle() {
     override val kind: PuzzleType get() = PuzzleType.KAKURO
-    override val options: PuzzleOptions get() = PuzzleOptions(Difficulty.MEDIUM, width, height)
+    override val options: PuzzleOptions get() = PuzzleOptions(difficulty, width, height)
 
     val geometry: KakuroGeometry by lazy {
         KakuroGeometry(width, height, BooleanArray(cells.size) { cells[it].white })

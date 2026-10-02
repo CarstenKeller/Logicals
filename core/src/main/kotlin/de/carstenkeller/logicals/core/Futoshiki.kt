@@ -217,7 +217,8 @@ internal class FutoshikiSolver(
  * Erzeugt Futoshikis mit eindeutiger Lösung.
  *
  * Ablauf: zufälliges lateinisches Quadrat → so lange Ungleichungen (bevorzugt) bzw.
- * Vorgaben hinzufügen, bis die Lösung eindeutig ist → überflüssige Hinweise entfernen →
+ * Vorgaben hinzufügen, bis die erklärbaren Hinweis-Schritte das Rätsel lösen (damit ist die
+ * Lösung eindeutig) → überflüssige Hinweise entfernen →
  * je nach Schwierigkeit wieder einige Vorgaben ergänzen (heuristische Abstufung).
  */
 class FutoshikiGenerator(private val random: Random = Random.Default) {
@@ -235,7 +236,6 @@ class FutoshikiGenerator(private val random: Random = Random.Default) {
         val down = IntArray(n * n)
 
         fun relation(a: Int, b: Int) = if (a < b) FutoshikiPuzzle.LESS else FutoshikiPuzzle.GREATER
-        fun solve() = FutoshikiSolver(n, givens, right, down).solve()
 
         // Startmenge: ein Teil der möglichen Ungleichungen.
         for (i in solution.indices) {
@@ -243,14 +243,10 @@ class FutoshikiGenerator(private val random: Random = Random.Default) {
             if (i / n < n - 1 && random.nextDouble() < 0.25) down[i] = relation(solution[i], solution[i + n])
         }
 
-        // Hinweise ergänzen, bis eindeutig.
+        // Hinweise ergänzen, bis die erklärbaren Schritte das Rätsel vollständig lösen.
         repeat(n * n * 3) {
-            val result = solve()
-            if (result.aborted) return null
-            if (result.count == 1) return finish(n, solution, givens, right, down, difficulty)
-            val other = result.solutions.first { !it.contentEquals(solution) }
-            val diff = solution.indices.filter { solution[it] != other[it] }
-            val cell = diff.random(random)
+            val cell = stuckCell(n, solution, givens, right, down, difficulty)
+            if (cell == -1) return finish(n, solution, givens, right, down, difficulty)
             if (random.nextInt(4) == 0) {
                 givens[cell] = solution[cell]
             } else {
@@ -271,6 +267,12 @@ class FutoshikiGenerator(private val random: Random = Random.Default) {
         }
         return null
     }
+
+    private fun stuckCell(
+        n: Int, solution: IntArray, givens: IntArray, right: IntArray, down: IntArray, difficulty: Difficulty,
+    ): Int = logicalStuckCell(
+        FutoshikiPuzzle(n, givens.toList(), right.toList(), down.toList(), solution.toList(), difficulty),
+    )
 
     private fun finish(
         n: Int,
@@ -294,8 +296,7 @@ class FutoshikiGenerator(private val random: Random = Random.Default) {
                 else -> down
             }
             array[i] = 0
-            val result = FutoshikiSolver(n, givens, right, down).solve()
-            if (result.aborted || result.count != 1) array[i] = value
+            if (stuckCell(n, solution, givens, right, down, difficulty) != -1) array[i] = value
         }
         // Leichtere Stufen bekommen zusätzliche Vorgaben.
         val extra = when (difficulty) {

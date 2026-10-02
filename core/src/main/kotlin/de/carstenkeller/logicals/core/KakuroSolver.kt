@@ -38,6 +38,10 @@ class KakuroSolver(
     private val combos = Array(runs.size) { KakuroCombos.of(runs[it].size, sums[it]) }
     private val whiteCells = geometry.white.indices.filter { geometry.white[it] }.toIntArray()
 
+    /** Stärke der Propagation; [solve] nutzt immer die volle Stärke. */
+    private var cellCheck = true
+    private var hiddenSingles = true
+
     private var nodes = 0L
     private var nodeLimit = 0L
     private var limit = 0
@@ -45,6 +49,8 @@ class KakuroSolver(
     private val found = ArrayList<IntArray>()
 
     fun solve(limit: Int = 2, nodeLimit: Long = 200_000L): Result {
+        cellCheck = true
+        hiddenSingles = true
         nodes = 0
         this.nodeLimit = nodeLimit
         this.limit = limit
@@ -57,11 +63,19 @@ class KakuroSolver(
     }
 
     /**
-     * Nur logisches Schließen ohne Raten.
+     * Nur logisches Schließen ohne Raten, in der für [level] erlaubten Stärke:
+     * - EASY: Kombinationen passend zu Summe und bereits gesetzten Ziffern, vergebene
+     *   Ziffern streichen.
+     * - MEDIUM: zusätzlich Ziffern, die in jeder Kombination vorkommen und nur noch an
+     *   eine Stelle passen, sowie Kombinationen, deren Ziffern keine Zelle mehr aufnimmt.
+     * - HARD: zusätzlich Kombinationen verwerfen, für die ein einzelnes Feld keinen
+     *   passenden Kandidaten mehr hat.
      * @return Kandidatenmengen je Zelle nach der Propagation oder null bei Widerspruch.
      */
-    fun deduce(): IntArray? {
+    fun deduce(level: Difficulty = Difficulty.HARD): IntArray? {
         if (combos.any { it.isEmpty() }) return null
+        hiddenSingles = level != Difficulty.EASY
+        cellCheck = level == Difficulty.HARD
         val domains = IntArray(geometry.white.size)
         for (cell in whiteCells) domains[cell] = ALL
         return if (propagate(domains)) domains else null
@@ -152,9 +166,9 @@ class KakuroSolver(
             for (combo in combos[r]) {
                 if (combo and singles != singles) continue
                 val rest = combo and singles.inv()
-                if (rest and openUnion != rest) continue
+                if (hiddenSingles && rest and openUnion != rest) continue
                 var ok = true
-                for (c in cells) {
+                if (cellCheck) for (c in cells) {
                     val d = dom[c]
                     if (Integer.bitCount(d) != 1 && d and rest == 0) {
                         ok = false
@@ -181,7 +195,7 @@ class KakuroSolver(
                 }
             }
             // Pflichtziffern, die nur noch in eine Zelle passen, dort setzen.
-            var req = required
+            var req = if (hiddenSingles) required else 0
             while (req != 0) {
                 val bit = Integer.lowestOneBit(req)
                 req = req and bit.inv()

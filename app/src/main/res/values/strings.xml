@@ -25,6 +25,15 @@
     <string name="lost_text">Ein Hund hat deine Katze erwischt.</string>
     <string name="play_again">Nochmal</string>
 
+    <string name="hint">Hinweis</string>
+    <string name="hint_close">Schließen</string>
+    <string name="hint_apply_place">%1$d eintragen</string>
+    <string name="hint_apply_clear">Löschen</string>
+    <string name="hint_apply_reveal">Aufdecken</string>
+    <string name="hint_apply_mark">🦴 Markieren</string>
+    <string name="hint_apply_unmark">Knochen entfernen</string>
+    <string name="hints_used">Genutzte Hinweise: %1$d</string>
+
     <string name="back">Zurück</string>
     <string name="continue_game">Fortsetzen</string>
     <string name="continue_details">Bisherige Zeit: %1$s</string>
