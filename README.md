@@ -41,4 +41,6 @@ Voraussetzung: Android SDK (Android Studio) und JDK 17.
 ./gradlew :app:assembleDebug
 ```
 
-Die GitHub-Action `Build` führt die Tests aus und stellt das Debug-APK als Artefakt bereit.
+Die GitHub-Action `Build` führt die Tests aus und veröffentlicht das Debug-APK als GitHub-Release.
+
+**Download der aktuellen Version:** https://github.com/CarstenKeller/Logicals/releases/latest/download/logicals.apk
