@@ -159,7 +159,7 @@ fun KakuroBoard(
                             )
                         } else {
                             ClueCell(
-                                size = cellSize,
+                                cellSize = cellSize,
                                 across = cell.across,
                                 down = cell.down,
                                 background = if (i in state.conflicts) colors.error else blackColor,
@@ -175,10 +175,10 @@ fun KakuroBoard(
 }
 
 @Composable
-private fun ClueCell(size: Dp, across: Int, down: Int, background: Color, textColor: Color, fontSize: TextUnit) {
+private fun ClueCell(cellSize: Dp, across: Int, down: Int, background: Color, textColor: Color, fontSize: TextUnit) {
     Box(
         Modifier
-            .size(size)
+            .size(cellSize)
             .background(background)
             .border(0.5.dp, Color.Black.copy(alpha = 0.5f)),
     ) {
