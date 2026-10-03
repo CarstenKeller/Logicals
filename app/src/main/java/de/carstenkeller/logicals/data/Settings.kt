@@ -18,6 +18,11 @@ class Settings(context: Context) {
             ?: ThemeMode.SYSTEM
         set(value) = prefs.edit().putString("theme_mode", value.name).apply()
 
+    /** "Einfach"-Modus für Zahlenrätsel: unmögliche Ziffern ausgrauen, Einzige automatisch setzen. */
+    var easyMode: Boolean
+        get() = prefs.getBoolean("easy_mode", false)
+        set(value) = prefs.edit().putBoolean("easy_mode", value).apply()
+
     fun options(type: PuzzleType): PuzzleOptions {
         val key = type.name.lowercase()
         val difficulty = prefs.getString("${key}_difficulty", null)

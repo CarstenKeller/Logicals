@@ -21,6 +21,9 @@ Android-App für Logikrätsel (Kotlin, Jetpack Compose).
 - **Zoom** in allen Rätseln per Zwei-Finger-Geste (scharf neu gezeichnet), Verschieben mit einem Finger in alle
   Richtungen (mit Schwung); Kakuro und Catsweeper lassen sich auch herauszoomen. „Zoom zurücksetzen“ erscheint bei Bedarf.
 - Notizmodus, Konfliktmarkierung, Hilfszeile mit möglichen Kakuro-Kombinationen.
+- **„Einfach“-Modus** (Schalter neben 💡, gespeichert) für alle Zahlenrätsel: Ziffern, die im gewählten Feld
+  direkt durch eingetragene Zahlen und Regeln ausgeschlossen sind, werden ausgegraut; ist nur eine Ziffer möglich,
+  wird sie beim Antippen eingesetzt. Keine mehrstufigen Schlussketten.
 - **💡 Hinweise** für alle Rätsel: nächster Schritt mit Erklärung, wie man selbst darauf kommt, und
   Hervorhebung der beteiligten Felder. Falsche Einträge werden zuerst gemeldet. Findet die eingebaute
   Logik keinen erklärbaren Schritt (z. B. bei schweren Sudokus), wird das offen gesagt und das Feld verraten.

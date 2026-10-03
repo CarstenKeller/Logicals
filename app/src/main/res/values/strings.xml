@@ -28,6 +28,7 @@
     <string name="play_again">Nochmal</string>
 
     <string name="hint">Hinweis</string>
+    <string name="easy_mode">Einfach</string>
     <string name="hint_close">Schließen</string>
     <string name="hint_apply_place">%1$d eintragen</string>
     <string name="hint_apply_clear">Löschen</string>

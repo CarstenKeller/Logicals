@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,6 +49,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.carstenkeller.logicals.R
+import de.carstenkeller.logicals.core.Candidates
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.FutoshikiPuzzle
 import de.carstenkeller.logicals.core.Hint
@@ -86,8 +88,15 @@ fun GameScreen(
                     }
                 },
                 actions = {
-                    val canHint = state.puzzle != null && !state.solved && !state.lost && !state.hintLoading
-                    TextButton(onClick = viewModel::requestHint, enabled = canHint) {
+                    val active = state.puzzle != null && !state.solved && !state.lost
+                    if (state.puzzle != null && state.puzzle !is CatsweeperPuzzle) {
+                        FilterChip(
+                            selected = state.easyMode,
+                            onClick = viewModel::toggleEasyMode,
+                            label = { Text(stringResource(R.string.easy_mode)) },
+                        )
+                    }
+                    TextButton(onClick = viewModel::requestHint, enabled = active && !state.hintLoading) {
                         Text("💡 " + stringResource(R.string.hint))
                     }
                 },
@@ -169,8 +178,18 @@ fun GameScreen(
                             onToggleMark = viewModel::toggleMarkMode,
                         )
                     } else {
+                        // Einfach-Modus: nur die für das gewählte Feld möglichen Ziffern freigeben.
+                        val allowed = remember(state.easyMode, state.selected, state.entries, puzzle) {
+                            val sel = state.selected
+                            if (state.easyMode && sel >= 0 && state.entries[sel] == 0) {
+                                Candidates.of(puzzle, state.entries.toIntArray(), sel)
+                            } else {
+                                -1
+                            }
+                        }
                         NumberPad(
                             maxDigit = puzzle.maxDigit,
+                            allowed = allowed,
                             enabled = !state.solved && state.selected >= 0,
                             notesMode = state.notesMode,
                             onDigit = viewModel::input,
@@ -313,6 +332,8 @@ private fun KakuroHint(puzzle: KakuroPuzzle, state: GameUiState) {
 @Composable
 private fun NumberPad(
     maxDigit: Int,
+    /** Bitmaske erlaubter Ziffern, -1 = alle. */
+    allowed: Int,
     enabled: Boolean,
     notesMode: Boolean,
     onDigit: (Int) -> Unit,
@@ -329,7 +350,7 @@ private fun NumberPad(
             for (digit in 1..maxDigit) {
                 FilledTonalButton(
                     onClick = { onDigit(digit) },
-                    enabled = enabled,
+                    enabled = enabled && allowed and (1 shl digit) != 0,
                     contentPadding = PaddingValues(0.dp),
                     modifier = Modifier
                         .weight(1f)

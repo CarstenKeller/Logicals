@@ -5,6 +5,7 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import de.carstenkeller.logicals.core.Candidates
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.GameState
@@ -16,6 +17,7 @@ import de.carstenkeller.logicals.core.PuzzleFactory
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
 import de.carstenkeller.logicals.data.GameRepository
+import de.carstenkeller.logicals.data.Settings
 import de.carstenkeller.logicals.ui.GameArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +50,8 @@ data class GameUiState(
     val hint: Hint? = null,
     val hintLoading: Boolean = false,
     val hintsUsed: Int = 0,
+    /** "Einfach"-Modus: unmögliche Ziffern ausgrauen, einzig mögliche beim Antippen setzen. */
+    val easyMode: Boolean = false,
 )
 
 class GameViewModel(
@@ -56,6 +60,7 @@ class GameViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = GameRepository.get(application)
+    private val settings = Settings(application)
     val type = PuzzleType.valueOf(requireNotNull(savedStateHandle.get<String>(GameArgs.TYPE)))
 
     private val _state = MutableStateFlow(GameUiState())
@@ -119,6 +124,7 @@ class GameViewModel(
             lost = game.puzzle.isLost(entries),
             round = round,
             hintsUsed = game.hintsUsed,
+            easyMode = settings.easyMode,
         )
         if (screenActive) startTimer()
     }
@@ -179,9 +185,26 @@ class GameViewModel(
     // ------------------------------------------------------------------ Zahlenrätsel
 
     fun select(index: Int) {
-        val puzzle = _state.value.puzzle ?: return
+        val s = _state.value
+        val puzzle = s.puzzle ?: return
         if (!puzzle.isEditable(index)) return
+        // Einfach-Modus: Ist nur eine Ziffer möglich, wird sie beim Antippen eingesetzt.
+        if (s.easyMode && !s.solved && s.entries[index] == 0) {
+            val mask = Candidates.of(puzzle, s.entries.toIntArray(), index)
+            if (Integer.bitCount(mask) == 1) {
+                val entries = s.entries.toMutableList().also { it[index] = Integer.numberOfTrailingZeros(mask) }
+                val notes = s.notes.toMutableList().also { it[index] = 0 }
+                applyEntries(s.copy(selected = index), entries, notes)
+                return
+            }
+        }
         _state.update { it.copy(selected = if (it.selected == index) -1 else index) }
+    }
+
+    fun toggleEasyMode() {
+        val enabled = !_state.value.easyMode
+        settings.easyMode = enabled
+        _state.update { it.copy(easyMode = enabled) }
     }
 
     fun toggleNotesMode() = _state.update { it.copy(notesMode = !it.notesMode) }
