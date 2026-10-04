@@ -67,7 +67,7 @@ Home-Bildschirm-Web-Apps sind von der 7-Tage-Löschung ausgenommen; Emoji erford
 - Abnahme: alle bisherigen Core-Tests laufen auf JVM **und** wasmJs; Android-CI-Build grün; APK verhält
   sich unverändert.
 
-### Phase 2 – Prototyp `web/` (nur Hauptmenü + Sudoku)
+### Phase 2 – Prototyp `web/` (nur Hauptmenü + Sudoku) – umgesetzt, Test auf iPhone offen
 - Neues Modul `web` mit Compose Multiplatform, Target `wasmJs { browser() }`, Ausgabe als statische Seite.
 - Wiederverwendung: Board-Composables, Theme, NumberPad, Timer-Logik – soweit ohne Android-APIs möglich.
   Gemeinsam nutzbare UI später ggf. in ein Modul `shared-ui` (commonMain) verschieben, damit Android und
