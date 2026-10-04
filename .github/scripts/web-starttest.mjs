@@ -50,6 +50,13 @@ try {
     await page.waitForSelector("#loading", { state: "detached", timeout: 60000 });
     console.log(`Startzeit bis zur Anzeige: ${Date.now() - t0} ms`);
     started = true;
+    // Zweiter Start über den Service Worker (wie beim erneuten Öffnen auf dem Handy).
+    await page.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 15000 })
+        .catch(() => console.log("Hinweis: Service Worker steuert die Seite noch nicht"));
+    const t1 = Date.now();
+    await page.reload();
+    await page.waitForSelector("#loading", { state: "detached", timeout: 60000 });
+    console.log(`Zweiter Start (Service Worker): ${Date.now() - t1} ms`);
     await page.waitForTimeout(1500);
     await tree("Hauptmenü");
 

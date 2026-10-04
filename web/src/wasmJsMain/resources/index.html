@@ -75,10 +75,32 @@
     // Fehler beim Start sichtbar machen (auf dem iPhone gibt es keine Konsole).
     function showStartError(message) {
         var box = document.getElementById("loading-text");
-        if (!box) return;
+        if (!box || box.className === "error") return;
         box.className = "error";
-        box.textContent = "Die App konnte nicht starten. Ein aktuelles iOS (ab 18.2) bzw. ein aktueller " +
-            "Browser wird benötigt. Details: " + message;
+        box.textContent = "Die App konnte nicht starten. Bitte auf „Neu laden“ tippen – gespeicherte " +
+            "Spielstände bleiben erhalten. Hilft das nicht, wird ein aktuelles iOS (ab 18.2) bzw. ein " +
+            "aktueller Browser benötigt. Details: " + message;
+        var button = document.createElement("button");
+        button.textContent = "Neu laden";
+        button.style.cssText = "margin-top:16px;padding:10px 20px;font:inherit;border-radius:20px;" +
+            "border:0;background:#3949ab;color:#fff";
+        button.onclick = resetAndReload;
+        box.parentNode.appendChild(button);
+    }
+    // Löscht nur zwischengespeicherte Programmdateien und den Service Worker, nicht den localStorage.
+    function resetAndReload() {
+        var steps = [];
+        if (window.caches) {
+            steps.push(caches.keys().then(function (keys) {
+                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }));
+        }
+        if (navigator.serviceWorker) {
+            steps.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            }));
+        }
+        Promise.all(steps).catch(function () {}).then(function () { location.reload(); });
     }
     window.addEventListener("error", function (e) { showStartError(e.message || String(e)); });
     window.addEventListener("unhandledrejection", function (e) {
@@ -90,6 +112,6 @@
         });
     }
 </script>
-<script type="application/javascript" src="logicals.js"></script>
+<script type="application/javascript" src="logicals.js?v=@VERSION@"></script>
 </body>
 </html>
