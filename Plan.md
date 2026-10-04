@@ -87,7 +87,11 @@ Home-Bildschirm-Web-Apps sind von der 7-Tage-Löschung ausgenommen; Emoji erford
   Einfach-Modus, Timer, Speichern/Fortsetzen; „Zum Home-Bildschirm“ startet im Vollbild; offline nutzbar.
   **Test auf echtem iPhone durch den Nutzer/Familie** (in der Cloud-Umgebung nicht möglich).
 
-### Phase 3 – Entscheidung A/B
+### Phase 3 – Entscheidung A/B – Variante A gewählt, umgesetzt
+- Gemeinsames Modul `shared-ui` (Android-Bibliothek + wasmJs) mit allen Bildschirmen, Spielfeldern,
+  Spiellogik (`GameController`) und Texten; `app/` und `web/` enthalten nur noch Plattformteile.
+- Compose Multiplatform 1.11.1 statt 1.12.x: Compose 1.12 verlangt auf Android compileSdk 37 und AGP 9.1+.
+  Material3 1.9.0 (stabil). Android: compileSdk 36, targetSdk/minSdk unverändert.
 - Prototyp gut → Variante A fortsetzen, gemeinsame UI nach `shared-ui` (commonMain) ziehen, sodass Android
   und Web dieselben Composables nutzen.
 - Prototyp nicht gut (Ladezeit, Gesten, Darstellung) → Variante B: `core` als JS/Wasm-Bibliothek + eigene
