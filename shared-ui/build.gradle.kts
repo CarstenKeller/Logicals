@@ -10,9 +10,6 @@ kotlin {
         namespace = "de.carstenkeller.logicals.ui"
         compileSdk = 35
         minSdk = 26
-        compilerOptions.configure {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
@@ -28,4 +25,9 @@ kotlin {
             api(libs.compose.mp.material3)
         }
     }
+}
+
+// Gleiches JVM-Ziel wie app/ (im androidLibrary-Block von AGP 8.11 nicht einstellbar).
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
 }
