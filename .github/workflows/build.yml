@@ -76,19 +76,11 @@ jobs:
       - name: Starttest im Headless-Chrome
         run: |
           DIST=web/build/dist/wasmJs/productionExecutable
+          rm -f "$DIST"/*.map
           mkdir -p /tmp/site && cp -r "$DIST" /tmp/site/Logicals
           (cd /tmp/site && python3 -m http.server 8080 >/dev/null 2>&1 &)
-          sleep 2
-          google-chrome --headless=new --disable-gpu --no-sandbox --virtual-time-budget=30000 \
-            --dump-dom http://localhost:8080/Logicals/ > /tmp/dom.html 2>/tmp/chrome.log || true
-          # Gelungener Start: Die App entfernt den Ladehinweis.
-          if grep -q 'id="loading"' /tmp/dom.html; then
-            echo "Ladehinweis noch vorhanden – App nicht gestartet:"
-            grep -o '<div id="loading-text"[^<]*<' /tmp/dom.html || true
-            tail -n 30 /tmp/chrome.log
-            exit 1
-          fi
-          echo "App gestartet."
+          cd .github/scripts && npm install --no-save --no-package-lock playwright-core@1 >/dev/null
+          node web-starttest.mjs http://localhost:8080/Logicals/ /tmp/site/start.png
 
       - uses: actions/upload-artifact@v4
         with:

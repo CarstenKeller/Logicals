@@ -123,6 +123,7 @@ private fun WithFonts(content: @Composable (FontFamily) -> Unit) {
     LaunchedEffect(fallbacks.size) {
         if (fallbacks.size == 2) {
             fallbacks.forEach { font: Font -> resolver.preload(FontFamily(font)) }
+            println("Ersatzschriften registriert")
             fallbacksReady = true
         }
     }
