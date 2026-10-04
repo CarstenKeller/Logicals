@@ -1,6 +1,9 @@
 package de.carstenkeller.logicals.core
 
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Erzeugt Kakuros in beliebiger Größe.
@@ -43,7 +46,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
         require(width in MIN_SIZE..MAX_SIZE && height in MIN_SIZE..MAX_SIZE) {
             "Größe muss zwischen $MIN_SIZE und $MAX_SIZE liegen"
         }
-        val deadline = System.nanoTime() + timeBudgetMillis * 1_000_000L
+        val deadline = TimeSource.Monotonic.markNow() + timeBudgetMillis.milliseconds
         var fallback: KakuroPuzzle? = null
         while (true) {
             val white = layout(width, height)
@@ -56,7 +59,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
                     fallback = puzzle
                 }
             }
-            if (System.nanoTime() > deadline) {
+            if (deadline.hasPassedNow()) {
                 if (fallback != null) return Generated(fallback.copy(unique = false), false)
                 // Notbremse: die Struktur des schweren Modus gelingt praktisch immer.
                 maxRun = 9
@@ -172,7 +175,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
             for (cell in cells) {
                 if (values[cell] != 0) continue
                 val mask = ALL and (used[geometry.acrossRunOf[cell]] or used[geometry.downRunOf[cell]]).inv()
-                val n = Integer.bitCount(mask)
+                val n = mask.countOneBits()
                 if (n == 0) return false
                 if (n < bestCount) {
                     best = cell
@@ -206,12 +209,12 @@ class KakuroGenerator(private val random: Random = Random.Default) {
      * logisches Schließen ([KakuroSolver.deduce]) vollständig lösbar ist. Ein so lösbares
      * Rätsel hat genau eine Lösung und kommt ohne Raten aus.
      */
-    private fun makeUnique(geometry: KakuroGeometry, fill: IntArray, deadline: Long): Pair<KakuroPuzzle, Boolean> {
+    private fun makeUnique(geometry: KakuroGeometry, fill: IntArray, deadline: TimeMark): Pair<KakuroPuzzle, Boolean> {
         val whiteCells = geometry.white.indices.filter { geometry.white[it] }
         var unresolved = unresolvedCells(geometry, fill)
         var stale = 0
         while (unresolved.isNotEmpty()) {
-            if (System.nanoTime() > deadline || stale > MAX_STALE_STEPS) {
+            if (deadline.hasPassedNow() || stale > MAX_STALE_STEPS) {
                 return build(geometry, fill, sums(geometry, fill)) to isUnique(geometry, fill)
             }
             val backup = fill.copyOf()
@@ -237,7 +240,7 @@ class KakuroGenerator(private val random: Random = Random.Default) {
     private fun unresolvedCells(geometry: KakuroGeometry, fill: IntArray): List<Int> {
         val domains = KakuroSolver(geometry, sums(geometry, fill)).deduce(level)
             ?: error("Propagation widerspricht der eigenen Lösung")
-        return geometry.white.indices.filter { geometry.white[it] && Integer.bitCount(domains[it]) != 1 }
+        return geometry.white.indices.filter { geometry.white[it] && domains[it].countOneBits() != 1 }
     }
 
     /** Prüft per Suche, ob das (nicht rein logisch lösbare) Rätsel trotzdem eindeutig ist. */

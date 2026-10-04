@@ -1,10 +1,10 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class PuzzleTest {
 
@@ -44,9 +44,9 @@ class PuzzleTest {
                 assertEquals(w * h, puzzle.cells.size)
                 for (run in puzzle.geometry.runs) assertTrue(run.cells.size in 2..9)
                 val solution = puzzle.solution.toIntArray()
-                assertTrue("solution must satisfy rules", puzzle.isSolved(solution))
+                assertTrue(puzzle.isSolved(solution), "solution must satisfy rules")
                 assertFalse(puzzle.isSolved(puzzle.initialEntries()))
-                assertTrue("${w}x$h seed $seed should be unique", generated.unique)
+                assertTrue(generated.unique, "${w}x$h seed $seed should be unique")
                 assertTrue(puzzle.unique)
                 val sums = IntArray(puzzle.geometry.runs.size) { puzzle.sumOf(puzzle.geometry.runs[it]) }
                 val result = KakuroSolver(puzzle.geometry, sums).solve()
@@ -81,7 +81,7 @@ class PuzzleTest {
             assertEquals(puzzle.kind, back.puzzle.kind)
         }
         val json = PuzzleJson.encodeToString(GameState.serializer(), GameState.start(kakuro))
-        assertFalse("geometry must not be serialized", json.contains("geometry"))
+        assertFalse(json.contains("geometry"), "geometry must not be serialized")
         assertTrue(PuzzleJson.decodeFromString(GameState.serializer(), json).puzzle is KakuroPuzzle)
         assertTrue(PuzzleJson.decodeFromString(GameState.serializer(), PuzzleJson.encodeToString(GameState.serializer(), GameState.start(sudoku))).puzzle is SudokuPuzzle)
     }

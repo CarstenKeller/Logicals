@@ -1,9 +1,9 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class CandidatesTest {
 
@@ -16,8 +16,8 @@ class CandidatesTest {
         var reduced = 0
         for (i in blanks) {
             val mask = Candidates.of(puzzle, entries, i)
-            assertTrue("${puzzle.kind}: Lösung ${solution[i]} in Feld $i ausgegraut", mask and (1 shl solution[i]) != 0)
-            if (Integer.bitCount(mask) < puzzle.maxDigit) reduced++
+            assertTrue(mask and (1 shl solution[i]) != 0, "${puzzle.kind}: Lösung ${solution[i]} in Feld $i ausgegraut")
+            if (mask.countOneBits() < puzzle.maxDigit) reduced++
         }
         return reduced to blanks.size
     }
@@ -34,7 +34,7 @@ class CandidatesTest {
             )
             for ((p, sol) in puzzles) {
                 val (reduced, total) = check(p, sol, s)
-                assertTrue("${p.kind}: Modus schränkt nichts ein", total == 0 || reduced > 0)
+                assertTrue(total == 0 || reduced > 0, "${p.kind}: Modus schränkt nichts ein")
             }
         }
     }

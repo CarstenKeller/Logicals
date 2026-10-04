@@ -128,7 +128,7 @@ internal class FutoshikiSolver(
         var best = -1
         var bestCount = Int.MAX_VALUE
         for (i in dom.indices) {
-            val cnt = Integer.bitCount(dom[i])
+            val cnt = dom[i].countOneBits()
             if (cnt in 2 until bestCount) {
                 best = i
                 bestCount = cnt
@@ -136,7 +136,7 @@ internal class FutoshikiSolver(
             }
         }
         if (best == -1) {
-            found += IntArray(dom.size) { Integer.numberOfTrailingZeros(dom[it]) }
+            found += IntArray(dom.size) { dom[it].countTrailingZeroBits() }
             return found.size >= limit
         }
         for (d in 1..n) {
@@ -157,7 +157,7 @@ internal class FutoshikiSolver(
                 var singles = 0
                 for (c in line) {
                     val d = dom[c]
-                    if (Integer.bitCount(d) == 1) {
+                    if (d.countOneBits() == 1) {
                         if (singles and d != 0) return false
                         singles = singles or d
                     }
@@ -165,7 +165,7 @@ internal class FutoshikiSolver(
                 var union = 0
                 for (c in line) {
                     val d = dom[c]
-                    if (Integer.bitCount(d) != 1) {
+                    if (d.countOneBits() != 1) {
                         val nd = d and singles.inv()
                         if (nd == 0) return false
                         if (nd != d) {
@@ -197,8 +197,8 @@ internal class FutoshikiSolver(
                 val a = pair[0]
                 val b = pair[1]
                 // a < b: a kleiner als größter Kandidat von b, b größer als kleinster von a.
-                val maxB = 31 - Integer.numberOfLeadingZeros(dom[b])
-                val minA = Integer.numberOfTrailingZeros(dom[a])
+                val maxB = 31 - dom[b].countLeadingZeroBits()
+                val minA = dom[a].countTrailingZeroBits()
                 val na = dom[a] and ((1 shl maxB) - 1)
                 val nb = dom[b] and ((1 shl (minA + 1)) - 1).inv()
                 if (na == 0 || nb == 0) return false

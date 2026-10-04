@@ -166,7 +166,7 @@ internal abstract class NumberHinter(
                 ?: nakedSingle()
                 ?: techniques().firstNotNullOfOrNull { it() }
                 ?: nakedPair()
-                ?: return open.minBy { Integer.bitCount(cand(it)) }
+                ?: return open.minBy { cand(it).countOneBits() }
             when (step) {
                 is HintStep.Place -> entries[step.cell] = step.digit
                 is HintStep.Eliminate -> for ((c, m) in step.removals) elim[c] = elim[c] or m
@@ -208,7 +208,7 @@ internal abstract class NumberHinter(
 
     private fun fallback(): Hint {
         val open = (0 until puzzle.cellCount).filter { isOpen(it) }
-        val target = open.minBy { Integer.bitCount(cand(it)).let { n -> if (n == 0) 99 else n } }
+        val target = open.minBy { cand(it).countOneBits().let { n -> if (n == 0) 99 else n } }
         return Hint(
             target, HintAction.PLACE, fallbackSolution[target],
             title = "Tipp ohne Herleitung",
@@ -229,8 +229,8 @@ internal abstract class NumberHinter(
         for (i in 0 until puzzle.cellCount) {
             if (!isOpen(i)) continue
             val m = cand(i)
-            if (Integer.bitCount(m) != 1) continue
-            val d = Integer.numberOfTrailingZeros(m)
+            if (m.countOneBits() != 1) continue
+            val d = m.countTrailingZeroBits()
             val lines = ArrayList<String>()
             val taken = unitsOf[i].mapNotNull { u ->
                 val ds = unitDigits(u, i)
@@ -288,7 +288,7 @@ internal abstract class NumberHinter(
 
     private fun nakedPair(): HintStep.Eliminate? {
         for (u in units) {
-            val pairs = u.cells.filter { isOpen(it) && Integer.bitCount(cand(it)) == 2 }
+            val pairs = u.cells.filter { isOpen(it) && cand(it).countOneBits() == 2 }
             for (a in pairs.indices) for (b in a + 1 until pairs.size) {
                 val m = cand(pairs[a])
                 if (cand(pairs[b]) != m) continue
@@ -397,8 +397,8 @@ internal class FutoshikiHinter(private val p: FutoshikiPuzzle, entries: IntArray
     private fun describe(cell: Int, mask: Int): String =
         if (!isOpen(cell)) "dort steht die ${entries[cell]}" else "dort ist höchstens die ${highest(mask)} möglich"
 
-    private fun highest(mask: Int) = 31 - Integer.numberOfLeadingZeros(mask)
-    private fun lowest(mask: Int) = Integer.numberOfTrailingZeros(mask)
+    private fun highest(mask: Int) = 31 - mask.countLeadingZeroBits()
+    private fun lowest(mask: Int) = mask.countTrailingZeroBits()
 
     private fun inequality(): HintStep? {
         for ((small, big) in pairs) {

@@ -5,7 +5,7 @@ object KakuroCombos {
     private val table: Array<Array<IntArray>> = Array(10) { len ->
         Array(46) { sum ->
             (0 until 512).map { it shl 1 }
-                .filter { Integer.bitCount(it) == len && maskSum(it) == sum }
+                .filter { it.countOneBits() == len && maskSum(it) == sum }
                 .toIntArray()
         }
     }
@@ -91,7 +91,7 @@ class KakuroSolver(
         var best = -1
         var bestCount = 10
         for (cell in whiteCells) {
-            val n = Integer.bitCount(domains[cell])
+            val n = domains[cell].countOneBits()
             if (n in 2 until bestCount) {
                 best = cell
                 bestCount = n
@@ -99,7 +99,7 @@ class KakuroSolver(
             }
         }
         if (best == -1) {
-            found += IntArray(domains.size) { if (domains[it] == 0) 0 else Integer.numberOfTrailingZeros(domains[it]) }
+            found += IntArray(domains.size) { if (domains[it] == 0) 0 else domains[it].countTrailingZeroBits() }
             return found.size >= limit
         }
         val mask = domains[best]
@@ -136,7 +136,7 @@ class KakuroSolver(
             var singles = 0
             for (c in cells) {
                 val d = dom[c]
-                if (Integer.bitCount(d) == 1) {
+                if (d.countOneBits() == 1) {
                     if (singles and d != 0) return false
                     singles = singles or d
                 }
@@ -146,14 +146,14 @@ class KakuroSolver(
             var newSingle = false
             for (c in cells) {
                 var d = dom[c]
-                if (Integer.bitCount(d) == 1) continue
+                if (d.countOneBits() == 1) continue
                 val nd = d and singles.inv()
                 if (nd != d) {
                     if (nd == 0) return false
                     dom[c] = nd
                     d = nd
                     changed(c)
-                    if (Integer.bitCount(nd) == 1) newSingle = true
+                    if (nd.countOneBits() == 1) newSingle = true
                 }
                 openUnion = openUnion or d
                 openCount++
@@ -170,7 +170,7 @@ class KakuroSolver(
                 var ok = true
                 if (cellCheck) for (c in cells) {
                     val d = dom[c]
-                    if (Integer.bitCount(d) != 1 && d and rest == 0) {
+                    if (d.countOneBits() != 1 && d and rest == 0) {
                         ok = false
                         break
                     }
@@ -186,7 +186,7 @@ class KakuroSolver(
             }
             for (c in cells) {
                 val d = dom[c]
-                if (Integer.bitCount(d) == 1) continue
+                if (d.countOneBits() == 1) continue
                 val nd = d and allowed
                 if (nd != d) {
                     if (nd == 0) return false
@@ -197,7 +197,7 @@ class KakuroSolver(
             // Pflichtziffern, die nur noch in eine Zelle passen, dort setzen.
             var req = if (hiddenSingles) required else 0
             while (req != 0) {
-                val bit = Integer.lowestOneBit(req)
+                val bit = req.takeLowestOneBit()
                 req = req and bit.inv()
                 var where = -1
                 var count = 0

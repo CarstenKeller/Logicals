@@ -1,7 +1,7 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * Sichert das Speicherformat: Die Spielstände unten wurden mit Kotlin 2.1.21 und

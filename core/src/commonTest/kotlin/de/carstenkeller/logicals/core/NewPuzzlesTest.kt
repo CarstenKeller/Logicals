@@ -1,10 +1,10 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class NewPuzzlesTest {
 
@@ -16,7 +16,7 @@ class NewPuzzlesTest {
                 val result = FutoshikiSolver(size, p.givens.toIntArray(), p.right.toIntArray(), p.down.toIntArray())
                     .solve(nodeLimit = 5_000_000L)
                 assertFalse(result.aborted)
-                assertEquals("size $size $difficulty", 1, result.count)
+                assertEquals(1, result.count, "size $size $difficulty")
                 assertTrue(result.solutions[0].contentEquals(p.solution.toIntArray()))
                 assertTrue(p.isSolved(p.solution.toIntArray()))
                 assertFalse(p.isSolved(p.initialEntries()))
@@ -46,7 +46,7 @@ class NewPuzzlesTest {
                 for (cage in p.cages) assertEquals(cage.target, cage.op.apply(cage.cells.map { p.solution[it] }))
                 val result = KenKenSolver(size, p.cages).solve(nodeLimit = 5_000_000L)
                 assertFalse(result.aborted)
-                assertEquals("size $size $difficulty", 1, result.count)
+                assertEquals(1, result.count, "size $size $difficulty")
                 assertTrue(p.isSolved(p.solution.toIntArray()))
                 assertFalse(p.isSolved(p.initialEntries()))
             }
@@ -62,7 +62,7 @@ class NewPuzzlesTest {
         assertFalse(p.isDog(start))
         assertTrue(p.neighbors(start).none { p.isDog(it) })
         var entries = p.reveal(p.initialEntries(), start)
-        assertTrue("flood fill opens more than one cell", entries.count { it == CatsweeperPuzzle.REVEALED } > 1)
+        assertTrue(entries.count { it == CatsweeperPuzzle.REVEALED } > 1, "flood fill opens more than one cell")
         assertFalse(p.isLost(entries))
         // Alle sicheren Felder aufdecken → gewonnen.
         for (i in entries.indices) if (!p.isDog(i)) entries = p.reveal(entries, i)

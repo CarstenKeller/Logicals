@@ -1,10 +1,10 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SkyscraperTest {
 
@@ -30,14 +30,14 @@ class SkyscraperTest {
             while (!p.isSolved(entries)) {
                 val hint = HintFinder.find(p, entries)!!
                 assertEquals(HintAction.PLACE, hint.action)
-                assertTrue("size $size $d: ${hint.title}", hint.title != "Tipp ohne Herleitung")
+                assertTrue(hint.title != "Tipp ohne Herleitung", "size $size $d: ${hint.title}")
                 assertEquals(solution[hint.cell], hint.value)
                 entries = entries.copyOf().also { it[hint.cell] = hint.value }
             }
             val clues = (p.top + p.bottom + p.left + p.right).count { it != 0 }
             println("skyscraper $size $d clues=$clues givens=${p.givens.count { it != 0 }}")
-            assertTrue("ein Skyscraper braucht Randhinweise", clues >= 3)
-            assertTrue("Randhinweise sollen tragen, nicht Vorgaben", p.givens.count { it != 0 } < size * size / 4)
+            assertTrue(clues >= 3, "ein Skyscraper braucht Randhinweise")
+            assertTrue(p.givens.count { it != 0 } < size * size / 4, "Randhinweise sollen tragen, nicht Vorgaben")
         }
     }
 

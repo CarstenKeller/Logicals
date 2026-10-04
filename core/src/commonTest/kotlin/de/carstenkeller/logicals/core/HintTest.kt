@@ -1,11 +1,11 @@
 package de.carstenkeller.logicals.core
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.random.Random
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class HintTest {
 
@@ -17,9 +17,8 @@ class HintTest {
             if (puzzle.isSolved(entries)) return fallbacks
             val hint = HintFinder.find(puzzle, entries)
             assertNotNull(hint)
-            hint!!
             assertEquals(HintAction.PLACE, hint.action)
-            assertEquals("${puzzle.kind} ${hint.title}: ${hint.steps}", solution[hint.cell], hint.value)
+            assertEquals(solution[hint.cell], hint.value, "${puzzle.kind} ${hint.title}: ${hint.steps}")
             assertTrue(hint.steps.isNotEmpty())
             if (hint.title == "Tipp ohne Herleitung") fallbacks++
             entries = entries.copyOf().also { it[hint.cell] = hint.value }
@@ -44,7 +43,7 @@ class HintTest {
             val p = KakuroGenerator(Random(d.ordinal)).generate(10, 10, d).puzzle
             val fallbacks = solveWithHints(p, p.solution)
             println("kakuro $d fallbacks=$fallbacks")
-            if (d != Difficulty.HARD) assertEquals("easy/medium kakuro must be explainable", 0, fallbacks)
+            if (d != Difficulty.HARD) assertEquals(0, fallbacks, "easy/medium kakuro must be explainable")
         }
     }
 
@@ -53,9 +52,9 @@ class HintTest {
         for (d in Difficulty.entries) {
             for (size in listOf(4, 6, 9)) {
                 val f = FutoshikiGenerator(Random(d.ordinal)).generate(size, d)
-                assertEquals("futoshiki $size $d", 0, solveWithHints(f, f.solution))
+                assertEquals(0, solveWithHints(f, f.solution), "futoshiki $size $d")
                 val k = KenKenGenerator(Random(d.ordinal)).generate(size, d)
-                assertEquals("kenken $size $d", 0, solveWithHints(k, k.solution))
+                assertEquals(0, solveWithHints(k, k.solution), "kenken $size $d")
             }
         }
     }
@@ -83,12 +82,12 @@ class HintTest {
                 when (hint.action) {
                     HintAction.REVEAL -> {
                         if (entries.none { it == CatsweeperPuzzle.REVEALED }) p = p.withSafeStart(hint.cell, Random(1))
-                        assertFalse("reveal must be safe", p.isDog(hint.cell))
+                        assertFalse(p.isDog(hint.cell), "reveal must be safe")
                         if (hint.title == "Hier müsstest du raten") guesses++
                         entries = p.reveal(entries, hint.cell)
                     }
                     HintAction.MARK -> {
-                        assertTrue("mark must be a dog", p.isDog(hint.cell))
+                        assertTrue(p.isDog(hint.cell), "mark must be a dog")
                         entries = p.toggleMark(entries, hint.cell)
                     }
                     else -> error("unexpected ${hint.action}")

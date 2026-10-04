@@ -152,7 +152,7 @@ internal class KenKenSolver(private val n: Int, private val cages: List<KenKenCa
         for (i in grid.indices) {
             if (grid[i] != 0) continue
             val m = cageMask(i) and (rows[i / n] or cols[i % n]).inv()
-            val cnt = Integer.bitCount(m)
+            val cnt = m.countOneBits()
             if (cnt == 0) return false
             if (cnt < bestCount) {
                 best = i

@@ -114,7 +114,7 @@ object SudokuSolver {
                 val c = i % 9
                 val b = (r / 3) * 3 + c / 3
                 val mask = ALL and (rows[r] or cols[c] or boxes[b]).inv()
-                val n = Integer.bitCount(mask)
+                val n = mask.countOneBits()
                 if (n == 0) return false
                 if (n < bestCount) {
                     best = i
