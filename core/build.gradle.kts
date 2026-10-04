@@ -13,12 +13,7 @@ kotlin {
     // Web-App (web/). Die Tests laufen unter Node.js, ein Browser ist dafür nicht nötig.
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
-        nodejs {
-            testTask {
-                // Die Generator-Tests brauchen länger als die Standardgrenze von Mocha (2 s).
-                useMocha { timeout = "300s" }
-            }
-        }
+        nodejs()
     }
 
     sourceSets {
