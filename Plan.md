@@ -29,13 +29,18 @@ Nicht-Ziele: native iOS-App, App Store, Server-Backend, Benutzerkonten, Synchron
 
 ## Vor dem Start zu prüfen (Wissensstand des Planerstellers kann veraltet sein)
 
-- [ ] Aktueller Status von **Compose Multiplatform für Web (wasmJs)**: stabil/Beta? Welche Version passt
+Ergebnis der Prüfung am 2026-10-04: Compose MP 1.12.1 (Web: Beta), Kotlin 2.4.20 (unterstützt AGP 8.11.1 und
+Gradle 8.14.3); JetBrains lifecycle 2.11.0 und navigation-compose 2.9.2 gibt es für wasmJs; WasmGC ab Safari 18.2;
+Home-Bildschirm-Web-Apps sind von der 7-Tage-Löschung ausgenommen; Emoji erfordern eine mitgelieferte Schrift
+(Compose Web nutzt nicht die Apple-Emoji-Schrift); Bundle-Größe wird in Phase 2 gemessen.
+
+- [x] Aktueller Status von **Compose Multiplatform für Web (wasmJs)**: stabil/Beta? Welche Version passt
       zu welcher Kotlin-Version? (Projekt nutzt derzeit Kotlin 2.1.21, AGP 8.11.1, Gradle 8.14.3.)
-- [ ] Sind `lifecycle-viewmodel`, `navigation-compose` (JetBrains-Varianten) für wasmJs verfügbar, oder
+- [x] Sind `lifecycle-viewmodel`, `navigation-compose` (JetBrains-Varianten) für wasmJs verfügbar, oder
       ist eine eigene einfache Navigation/State-Haltung sinnvoller?
-- [ ] Safari iOS 26: WasmGC, Speicher-Verhalten (Wird `localStorage`/IndexedDB einer Web-App gelöscht,
+- [x] Safari iOS 26: WasmGC, Speicher-Verhalten (Wird `localStorage`/IndexedDB einer Web-App gelöscht,
       wenn sie nicht zum Home-Bildschirm hinzugefügt wurde? Laut Kenntnisstand: ja, nach Inaktivität möglich.)
-- [ ] Emoji-Darstellung (🐱🐶🦴💡) in Compose Web: werden Emoji-Schriften benötigt/mitgeladen?
+- [x] Emoji-Darstellung (🐱🐶🦴💡) in Compose Web: werden Emoji-Schriften benötigt/mitgeladen?
 - [ ] Download-Größe des Wasm-Bundles (Ziel: Erstladen auf dem Handy in vertretbarer Zeit).
 
 ## Phasen
@@ -45,7 +50,7 @@ Nicht-Ziele: native iOS-App, App Store, Server-Backend, Benutzerkonten, Synchron
 - Settings → Pages → Source: **„GitHub Actions“** auswählen (sonst kann der Workflow nicht deployen).
 - Alter Branch `claude/android-logic-puzzle-app-4zboyu` kann danach gelöscht werden.
 
-### Phase 1 – `core` zu Kotlin Multiplatform (Android bleibt grün)
+### Phase 1 – `core` zu Kotlin Multiplatform (Android bleibt grün) – erledigt
 - Plugin `org.jetbrains.kotlin.multiplatform`, Targets: `jvm()` und `wasmJs { browser() }`
   (ggf. zusätzlich `js(IR)`, falls für Variante B nötig).
 - Quellen nach `core/src/commonMain/kotlin`, Tests nach `core/src/commonTest/kotlin`
@@ -62,7 +67,7 @@ Nicht-Ziele: native iOS-App, App Store, Server-Backend, Benutzerkonten, Synchron
 - Abnahme: alle bisherigen Core-Tests laufen auf JVM **und** wasmJs; Android-CI-Build grün; APK verhält
   sich unverändert.
 
-### Phase 2 – Prototyp `web/` (nur Hauptmenü + Sudoku)
+### Phase 2 – Prototyp `web/` (nur Hauptmenü + Sudoku) – umgesetzt, Test auf iPhone offen
 - Neues Modul `web` mit Compose Multiplatform, Target `wasmJs { browser() }`, Ausgabe als statische Seite.
 - Wiederverwendung: Board-Composables, Theme, NumberPad, Timer-Logik – soweit ohne Android-APIs möglich.
   Gemeinsam nutzbare UI später ggf. in ein Modul `shared-ui` (commonMain) verschieben, damit Android und

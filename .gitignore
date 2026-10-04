@@ -8,3 +8,6 @@ build/
 .externalNativeBuild
 .cxx
 .kotlin/
+
+# Python-Pakete (versehentliche Downloads)
+*.whl
