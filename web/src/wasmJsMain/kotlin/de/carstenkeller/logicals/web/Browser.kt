@@ -18,7 +18,7 @@ internal object Browser {
         jsSetPageColor(cssColor)
     }
 
-    val pageHidden: Boolean get() = document.hidden
+    val pageHidden: Boolean get() = jsPageHidden()
 
     private val visibilityListeners = mutableListOf<() -> Unit>()
 
@@ -36,6 +36,8 @@ internal object Browser {
 }
 
 private fun jsVersion(): String = js("(globalThis.LOGICALS_VERSION || 'lokal')")
+
+private fun jsPageHidden(): Boolean = js("document.hidden")
 
 private fun jsSetPageColor(color: String): Unit = js(
     """{
