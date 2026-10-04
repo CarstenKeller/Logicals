@@ -27,8 +27,17 @@ async function tree(title) {
 async function tap(name, wait = 1500) {
     const pattern = name instanceof RegExp ? name : new RegExp("^" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
     const el = page.getByRole("button", { name: pattern }).first();
-    const box = await el.boundingBox({ timeout: 5000 });
+    let box = await el.boundingBox({ timeout: 5000 });
     if (!box) throw new Error(`Button "${name}" nicht gefunden`);
+    // Außerhalb des sichtbaren Bereichs: mit dem Mausrad dorthin scrollen.
+    const viewport = page.viewportSize();
+    if (box.y < 0 || box.y + box.height > viewport.height || (box.x === 0 && box.y === 0)) {
+        await page.mouse.move(viewport.width / 2, viewport.height / 2);
+        await page.mouse.wheel(0, 2000);
+        await page.waitForTimeout(800);
+        box = await el.boundingBox({ timeout: 5000 });
+        if (!box) throw new Error(`Button "${name}" nach dem Scrollen nicht gefunden`);
+    }
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     console.log(`Getippt: "${name}" bei ${Math.round(box.x + box.width / 2)},${Math.round(box.y + box.height / 2)}`);
     await page.waitForTimeout(wait);
