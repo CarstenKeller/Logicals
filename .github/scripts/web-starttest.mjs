@@ -23,13 +23,15 @@ async function tree(title) {
     console.log(`----- ${title} -----\n${snapshot}`);
 }
 
-async function tap(text, options = {}) {
-    const el = page.getByText(text, { exact: options.exact ?? true }).first();
+/** Tippt auf den ersten Button, dessen Name mit [name] beginnt (Position im Canvas). */
+async function tap(name, wait = 1500) {
+    const pattern = name instanceof RegExp ? name : new RegExp("^" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const el = page.getByRole("button", { name: pattern }).first();
     const box = await el.boundingBox({ timeout: 5000 });
-    if (!box) throw new Error(`"${text}" nicht gefunden`);
+    if (!box) throw new Error(`Button "${name}" nicht gefunden`);
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-    console.log(`Getippt: "${text}" bei ${Math.round(box.x + box.width / 2)},${Math.round(box.y + box.height / 2)}`);
-    await page.waitForTimeout(options.wait ?? 1500);
+    console.log(`Getippt: "${name}" bei ${Math.round(box.x + box.width / 2)},${Math.round(box.y + box.height / 2)}`);
+    await page.waitForTimeout(wait);
 }
 
 let started = false;
@@ -44,10 +46,14 @@ try {
 
     await tap("Sudoku");
     await tree("Sudoku-Startseite");
-    await tap("Rätsel generieren", { wait: 4000 });
+    await tap("Rätsel generieren", 4000);
     await tree("Spiel");
-    await tap("💡 Hinweis", { wait: 3000 });
+    await tap("💡 Hinweis", 3000);
     await tree("Spiel mit Hinweis");
+    await tap(/eintragen$/);
+    await tree("Hinweis übernommen");
+    await tap("Zurück");
+    await tree("Sudoku-Startseite mit gespeichertem Stand");
 } catch (e) {
     console.log(started ? `FLOW-FEHLER: ${e.message}` : `Start fehlgeschlagen: ${e.message}`);
     if (!started) console.log("Ladetext: " + await page.textContent("#loading-text").catch(() => "?"));
