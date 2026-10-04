@@ -7,9 +7,10 @@ composeBom = "2025.06.00"
 lifecycle = "2.9.1"
 navigationCompose = "2.9.0"
 serialization = "1.11.0"
-composeMultiplatform = "1.12.1"
-# Zu Compose Multiplatform 1.12.1 gehörende Material3-Version (laut JetBrains, Alpha).
-composeMultiplatformMaterial3 = "1.12.0-alpha03"
+# 1.11.x statt 1.12.x: Compose 1.12 verlangt auf Android compileSdk 37 und AGP 9.1+.
+composeMultiplatform = "1.11.1"
+# Letzte stabile Material3-Version für Compose Multiplatform (entspricht Jetpack Material3 1.4.0).
+composeMultiplatformMaterial3 = "1.9.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

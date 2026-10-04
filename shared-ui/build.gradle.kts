@@ -8,7 +8,7 @@ kotlin {
     // Gemeinsame Oberfläche (Compose) für die Android-App (app/) und die Web-App (web/).
     androidLibrary {
         namespace = "de.carstenkeller.logicals.ui"
-        compileSdk = 35
+        compileSdk = 36
         minSdk = 26
     }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
