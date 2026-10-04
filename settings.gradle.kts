@@ -44,3 +44,4 @@ fun RepositoryHandler.toolRepository(url: String, pattern: String, group: String
 rootProject.name = "Logicals"
 include(":core")
 include(":app")
+include(":web")

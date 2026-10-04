@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
 }
 
 // Node.js, Yarn und Binaryen werden über die Repositories aus settings.gradle.kts geladen.
