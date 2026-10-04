@@ -1,18 +1,20 @@
-package de.carstenkeller.logicals.web.ui
+package de.carstenkeller.logicals.ui
 
 import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.PuzzleType
 
-/** UI-Texte der Web-App; entsprechen app/src/main/res/values/strings.xml. */
+/** UI-Texte der Android- und der Web-App (früher app/src/main/res/values/strings.xml). */
 object Texte {
     const val APP_NAME = "Logicals"
     const val MENU_SUBTITLE = "Wähle ein Logikrätsel"
-    const val NOT_YET_AVAILABLE = "Im Web-Prototyp noch nicht verfügbar."
     fun version(name: String) = "Version $name"
 
     fun sizeLabel(n: Int) = "Größe: $n × $n"
     fun columnsLabel(n: Int) = "Spalten: $n"
     fun rowsLabel(n: Int) = "Zeilen: $n"
+    const val CATSWEEPER_MARK = "🦴 Markieren"
+    const val CATSWEEPER_HELP = "Tippen: Katze aufdecken · Lang drücken: Hund mit 🦴 markieren"
+    fun catsweeperRemaining(n: Int) = "🐶 übrig: $n"
 
     const val HINT = "Hinweis"
     const val EASY_MODE = "Einfach"
@@ -55,6 +57,8 @@ object Texte {
     const val LOST_TEXT = "Ein Hund hat deine Katze erwischt."
     const val PLAY_AGAIN = "Nochmal"
     const val TO_MENU = "Zum Menü"
+    const val KAKURO_NOT_UNIQUE = "Hinweis: Für dieses Kakuro konnte in der verfügbaren Zeit keine eindeutige " +
+        "Lösung garantiert werden. Jede regelkonforme Lösung wird anerkannt."
 
     val PuzzleType.title: String
         get() = when (this) {

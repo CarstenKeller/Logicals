@@ -5,11 +5,8 @@ import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
 
-/** Darstellung: dem System folgen oder fest hell/dunkel. */
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
-
 /** Merkt sich die Darstellung und pro Rätselart die zuletzt gewählten Optionen für neue Rätsel. */
-class Settings(context: Context) {
+class Settings(context: Context) : PuzzleSettings {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     var themeMode: ThemeMode
@@ -18,12 +15,11 @@ class Settings(context: Context) {
             ?: ThemeMode.SYSTEM
         set(value) = prefs.edit().putString("theme_mode", value.name).apply()
 
-    /** "Einfach"-Modus für Zahlenrätsel: unmögliche Ziffern ausgrauen, Einzige automatisch setzen. */
-    var easyMode: Boolean
+    override var easyMode: Boolean
         get() = prefs.getBoolean("easy_mode", false)
         set(value) = prefs.edit().putBoolean("easy_mode", value).apply()
 
-    fun options(type: PuzzleType): PuzzleOptions {
+    override fun options(type: PuzzleType): PuzzleOptions {
         val key = type.name.lowercase()
         val difficulty = prefs.getString("${key}_difficulty", null)
             ?.let { name -> Difficulty.entries.firstOrNull { it.name == name } }
@@ -34,7 +30,7 @@ class Settings(context: Context) {
         return PuzzleOptions(difficulty, width, height)
     }
 
-    fun save(type: PuzzleType, options: PuzzleOptions) {
+    override fun save(type: PuzzleType, options: PuzzleOptions) {
         val key = type.name.lowercase()
         prefs.edit()
             .putString("${key}_difficulty", options.difficulty.name)

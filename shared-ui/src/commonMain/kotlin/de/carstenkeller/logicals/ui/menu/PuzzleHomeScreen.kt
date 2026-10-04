@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -34,32 +32,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import de.carstenkeller.logicals.R
 import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.GameState
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
-import de.carstenkeller.logicals.data.GameRepository
-import de.carstenkeller.logicals.data.Settings
+import de.carstenkeller.logicals.data.GameStore
+import de.carstenkeller.logicals.data.PuzzleSettings
+import de.carstenkeller.logicals.ui.ArrowBackIcon
+import de.carstenkeller.logicals.ui.Texte
+import de.carstenkeller.logicals.ui.Texte.label
+import de.carstenkeller.logicals.ui.Texte.title
 import de.carstenkeller.logicals.ui.formatDuration
-import de.carstenkeller.logicals.ui.labelRes
-import de.carstenkeller.logicals.ui.titleRes
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PuzzleHomeScreen(
     type: PuzzleType,
+    repository: GameStore,
+    settings: PuzzleSettings,
     onBack: () -> Unit,
     onContinue: () -> Unit,
     onNewGame: (PuzzleOptions) -> Unit,
 ) {
-    val context = LocalContext.current
-    val repository = remember { GameRepository.get(context) }
-    val settings = remember { Settings(context) }
     val saved by remember(type) { repository.observe(type) }.collectAsState(initial = null)
 
     val initial = remember(type) { settings.options(type) }
@@ -77,10 +73,10 @@ fun PuzzleHomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(type.titleRes)) },
+                title = { Text(type.title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(ArrowBackIcon, contentDescription = Texte.BACK)
                     }
                 },
             )
@@ -98,20 +94,20 @@ fun PuzzleHomeScreen(
 
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.new_game), style = MaterialTheme.typography.titleLarge)
+                    Text(Texte.NEW_GAME, style = MaterialTheme.typography.titleLarge)
                     if (type.hasDifficulty) DifficultySelector(difficulty) { difficulty = it }
                     val range = type.sizeRange
                     if (range != null) {
                         if (type.rectangular) {
-                            SizeSlider(stringResource(R.string.columns_label, width), width, range) { width = it }
-                            SizeSlider(stringResource(R.string.rows_label, height), height, range) { height = it }
+                            SizeSlider(Texte.columnsLabel(width), width, range) { width = it }
+                            SizeSlider(Texte.rowsLabel(height), height, range) { height = it }
                         } else {
-                            SizeSlider(stringResource(R.string.size_label, width), width, range) { width = it }
+                            SizeSlider(Texte.sizeLabel(width), width, range) { width = it }
                         }
                     }
                     if (type == PuzzleType.KAKURO) {
                         Text(
-                            stringResource(R.string.kakuro_size_hint),
+                            Texte.KAKURO_SIZE_HINT,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -120,7 +116,7 @@ fun PuzzleHomeScreen(
                         onClick = { if (saved != null) confirmDiscard = true else startNew() },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.generate))
+                        Text(Texte.GENERATE)
                     }
                 }
             }
@@ -130,16 +126,16 @@ fun PuzzleHomeScreen(
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
-            title = { Text(stringResource(R.string.discard_title)) },
-            text = { Text(stringResource(R.string.discard_text)) },
+            title = { Text(Texte.DISCARD_TITLE) },
+            text = { Text(Texte.DISCARD_TEXT) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDiscard = false
                     startNew()
-                }) { Text(stringResource(R.string.discard_confirm)) }
+                }) { Text(Texte.DISCARD_CONFIRM) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDiscard = false }) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = { confirmDiscard = false }) { Text(Texte.CANCEL) }
             },
         )
     }
@@ -149,13 +145,13 @@ fun PuzzleHomeScreen(
 private fun ContinueCard(saved: GameState?, onContinue: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.continue_game), style = MaterialTheme.typography.titleLarge)
+            Text(Texte.CONTINUE_GAME, style = MaterialTheme.typography.titleLarge)
             if (saved == null) {
-                Text(stringResource(R.string.no_saved_game), style = MaterialTheme.typography.bodyMedium)
+                Text(Texte.NO_SAVED_GAME, style = MaterialTheme.typography.bodyMedium)
             } else {
                 Text(describe(saved), style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    stringResource(R.string.continue_details, formatDuration(saved.elapsedMillis)),
+                    Texte.continueDetails(formatDuration(saved.elapsedMillis)),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -163,22 +159,21 @@ private fun ContinueCard(saved: GameState?, onContinue: () -> Unit) {
                 onClick = onContinue,
                 enabled = saved != null,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.continue_game)) }
+            ) { Text(Texte.CONTINUE_GAME) }
         }
     }
 }
 
-@Composable
 private fun describe(state: GameState): String {
     val p = state.puzzle
     val size = "${p.width} × ${p.height}"
-    return if (p.kind.hasDifficulty) "$size · ${stringResource(p.options.difficulty.labelRes)}" else size
+    return if (p.kind.hasDifficulty) "$size · ${p.options.difficulty.label}" else size
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DifficultySelector(selected: Difficulty, onSelect: (Difficulty) -> Unit) {
-    Text(stringResource(R.string.difficulty), style = MaterialTheme.typography.titleSmall)
+    Text(Texte.DIFFICULTY, style = MaterialTheme.typography.titleSmall)
     val options = Difficulty.entries
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { index, difficulty ->
@@ -186,7 +181,7 @@ private fun DifficultySelector(selected: Difficulty, onSelect: (Difficulty) -> U
                 selected = difficulty == selected,
                 onClick = { onSelect(difficulty) },
                 shape = SegmentedButtonDefaults.itemShape(index, options.size),
-            ) { Text(stringResource(difficulty.labelRes)) }
+            ) { Text(difficulty.label) }
         }
     }
 }

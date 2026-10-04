@@ -18,11 +18,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core"))
-            implementation(libs.compose.mp.runtime)
-            implementation(libs.compose.mp.foundation)
-            implementation(libs.compose.mp.ui)
-            implementation(libs.compose.mp.material3)
+            implementation(project(":shared-ui"))
             implementation(libs.compose.mp.resources)
         }
     }

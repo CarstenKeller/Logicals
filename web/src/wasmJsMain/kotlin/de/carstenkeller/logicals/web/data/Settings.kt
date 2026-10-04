@@ -3,15 +3,14 @@ package de.carstenkeller.logicals.web.data
 import de.carstenkeller.logicals.core.Difficulty
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
-
-/** Darstellung: dem System folgen oder fest hell/dunkel. */
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
+import de.carstenkeller.logicals.data.PuzzleSettings
+import de.carstenkeller.logicals.data.ThemeMode
 
 /**
  * Merkt sich die Darstellung und pro Rätselart die zuletzt gewählten Optionen für neue Rätsel.
  * Schlüssel wie in den SharedPreferences der Android-App, mit Präfix "settings.".
  */
-object Settings {
+object Settings : PuzzleSettings {
     private fun key(name: String) = "settings.$name"
 
     var themeMode: ThemeMode
@@ -20,12 +19,11 @@ object Settings {
             ?: ThemeMode.SYSTEM
         set(value) = Storage.set(key("theme_mode"), value.name)
 
-    /** "Einfach"-Modus für Zahlenrätsel: unmögliche Ziffern ausgrauen, Einzige automatisch setzen. */
-    var easyMode: Boolean
+    override var easyMode: Boolean
         get() = Storage.get(key("easy_mode")) == "true"
         set(value) = Storage.set(key("easy_mode"), value.toString())
 
-    fun options(type: PuzzleType): PuzzleOptions {
+    override fun options(type: PuzzleType): PuzzleOptions {
         val prefix = type.name.lowercase()
         val difficulty = Storage.get(key("${prefix}_difficulty"))
             ?.let { name -> Difficulty.entries.firstOrNull { it.name == name } }
@@ -38,7 +36,7 @@ object Settings {
         return PuzzleOptions(difficulty, size("width", type.defaultWidth), size("height", type.defaultHeight))
     }
 
-    fun save(type: PuzzleType, options: PuzzleOptions) {
+    override fun save(type: PuzzleType, options: PuzzleOptions) {
         val prefix = type.name.lowercase()
         Storage.set(key("${prefix}_difficulty"), options.difficulty.name)
         Storage.set(key("${prefix}_width"), options.width.toString())

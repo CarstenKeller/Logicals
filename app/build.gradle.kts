@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "de.carstenkeller.logicals"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.carstenkeller.logicals.puzzles"
@@ -56,13 +56,13 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":shared-ui"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)

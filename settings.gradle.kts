@@ -45,3 +45,4 @@ rootProject.name = "Logicals"
 include(":core")
 include(":app")
 include(":web")
+include(":shared-ui")

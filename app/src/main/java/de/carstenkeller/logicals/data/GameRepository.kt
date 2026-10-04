@@ -25,7 +25,7 @@ import java.io.File
  * gehen Speichervorgänge nicht verloren, wenn ein Bildschirm (und sein ViewModel)
  * direkt nach einer Eingabe geschlossen wird.
  */
-class GameRepository private constructor(context: Context) {
+class GameRepository private constructor(context: Context) : GameStore {
 
     private sealed interface Op {
         data class Save(val state: GameState) : Op
@@ -54,22 +54,22 @@ class GameRepository private constructor(context: Context) {
         }
     }
 
-    fun observe(type: PuzzleType): Flow<GameState?> = flow {
+    override fun observe(type: PuzzleType): Flow<GameState?> = flow {
         loaded.await()
         emitAll(states.getValue(type))
     }
 
-    suspend fun load(type: PuzzleType): GameState? {
+    override suspend fun load(type: PuzzleType): GameState? {
         loaded.await()
         return states.getValue(type).value
     }
 
-    fun save(state: GameState) {
+    override fun save(state: GameState) {
         states.getValue(state.puzzle.kind).value = state
         ops.trySend(Op.Save(state))
     }
 
-    fun delete(type: PuzzleType) {
+    override fun delete(type: PuzzleType) {
         states.getValue(type).value = null
         ops.trySend(Op.Delete(type))
     }

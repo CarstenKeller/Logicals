@@ -3,6 +3,7 @@ package de.carstenkeller.logicals.web.data
 import de.carstenkeller.logicals.core.GameState
 import de.carstenkeller.logicals.core.PuzzleJson
 import de.carstenkeller.logicals.core.PuzzleType
+import de.carstenkeller.logicals.data.GameStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,19 +14,19 @@ import kotlinx.coroutines.flow.StateFlow
  * Der Browser schreibt localStorage synchron; ein Hintergrund-Schreiber wie auf Android ist
  * daher nicht nötig.
  */
-object GameRepository {
+object GameRepository : GameStore {
     private val states = PuzzleType.entries.associateWith { type -> MutableStateFlow(read(type)) }
 
-    fun observe(type: PuzzleType): StateFlow<GameState?> = states.getValue(type)
+    override fun observe(type: PuzzleType): StateFlow<GameState?> = states.getValue(type)
 
-    fun load(type: PuzzleType): GameState? = states.getValue(type).value
+    override suspend fun load(type: PuzzleType): GameState? = states.getValue(type).value
 
-    fun save(state: GameState) {
+    override fun save(state: GameState) {
         states.getValue(state.puzzle.kind).value = state
         Storage.set(keyFor(state.puzzle.kind), PuzzleJson.encodeToString(GameState.serializer(), state))
     }
 
-    fun delete(type: PuzzleType) {
+    override fun delete(type: PuzzleType) {
         states.getValue(type).value = null
         Storage.remove(keyFor(type))
     }
