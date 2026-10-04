@@ -1,4 +1,4 @@
-package de.carstenkeller.logicals.web.ui
+package de.carstenkeller.logicals.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor

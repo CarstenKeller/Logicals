@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -41,14 +40,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import de.carstenkeller.logicals.R
 import de.carstenkeller.logicals.core.Candidates
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
 import de.carstenkeller.logicals.core.FutoshikiPuzzle
@@ -59,32 +52,33 @@ import de.carstenkeller.logicals.core.KenKenPuzzle
 import de.carstenkeller.logicals.core.SkyscraperPuzzle
 import de.carstenkeller.logicals.core.KakuroPuzzle
 import de.carstenkeller.logicals.core.SudokuPuzzle
+import de.carstenkeller.logicals.ui.ArrowBackIcon
+import de.carstenkeller.logicals.ui.Texte
+import de.carstenkeller.logicals.ui.Texte.title
 import de.carstenkeller.logicals.ui.formatDuration
-import de.carstenkeller.logicals.ui.titleRes
+import de.carstenkeller.logicals.ui.tabularNumbers
 
+/**
+ * Spielbildschirm für alle Rätsel. Wann die Zeit läuft, steuert die jeweilige Plattform über
+ * [GameController.onScreenResumed] und [GameController.onScreenPaused].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(
+    controller: GameController,
     onBack: () -> Unit,
     onToMenu: () -> Unit,
-    viewModel: GameViewModel = viewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val elapsed by viewModel.elapsed.collectAsStateWithLifecycle()
-
-    // Zeit läuft nur, solange dieser Bildschirm sichtbar und aktiv ist.
-    LifecycleResumeEffect(viewModel) {
-        viewModel.onScreenResumed()
-        onPauseOrDispose { viewModel.onScreenPaused() }
-    }
+    val state by controller.state.collectAsState()
+    val elapsed by controller.elapsed.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(viewModel.type.titleRes)) },
+                title = { Text(controller.type.title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(ArrowBackIcon, contentDescription = Texte.BACK)
                     }
                 },
                 actions = {
@@ -92,12 +86,12 @@ fun GameScreen(
                     if (state.puzzle != null && state.puzzle !is CatsweeperPuzzle) {
                         FilterChip(
                             selected = state.easyMode,
-                            onClick = viewModel::toggleEasyMode,
-                            label = { Text(stringResource(R.string.easy_mode)) },
+                            onClick = controller::toggleEasyMode,
+                            label = { Text(Texte.EASY_MODE) },
                         )
                     }
-                    TextButton(onClick = viewModel::requestHint, enabled = active && !state.hintLoading) {
-                        Text("💡 " + stringResource(R.string.hint))
+                    TextButton(onClick = controller::requestHint, enabled = active && !state.hintLoading) {
+                        Text("💡 " + Texte.HINT)
                     }
                 },
             )
@@ -116,17 +110,16 @@ fun GameScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     CircularProgressIndicator()
-                    Text(stringResource(R.string.generating))
+                    Text(Texte.GENERATING)
                 }
                 state.missing || puzzle == null -> Text(
-                    stringResource(R.string.load_failed),
+                    Texte.LOAD_FAILED,
                     modifier = Modifier.align(Alignment.Center),
                 )
                 else -> Column(Modifier.fillMaxSize()) {
                     Text(
-                        text = stringResource(R.string.time_label) + "  " + formatDuration(elapsed),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontFamily = FontFamily.Monospace,
+                        text = Texte.TIME_LABEL + "  " + formatDuration(elapsed),
+                        style = MaterialTheme.typography.headlineSmall.tabularNumbers(),
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -134,7 +127,7 @@ fun GameScreen(
                     )
                     if (puzzle is KakuroPuzzle && !puzzle.unique) {
                         Text(
-                            stringResource(R.string.kakuro_not_unique),
+                            Texte.KAKURO_NOT_UNIQUE,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -154,28 +147,27 @@ fun GameScreen(
                             // Rätsel, die sich an den Platz anpassen, bekommen die gezoomte Fläche.
                             val fit = Modifier.size(viewport * zoom)
                             when (puzzle) {
-                                is SudokuPuzzle -> SudokuBoard(puzzle, state, viewModel::select, fit)
-                                is KakuroPuzzle -> KakuroBoard(puzzle, state, viewModel::select, zoom = zoom)
-                                is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, viewModel::select, fit)
-                                is KenKenPuzzle -> KenKenBoard(puzzle, state, viewModel::select, fit)
-                                is SkyscraperPuzzle -> SkyscraperBoard(puzzle, state, viewModel::select, fit)
+                                is SudokuPuzzle -> SudokuBoard(puzzle, state, controller::select, fit)
+                                is KakuroPuzzle -> KakuroBoard(puzzle, state, controller::select, zoom = zoom)
+                                is FutoshikiPuzzle -> FutoshikiBoard(puzzle, state, controller::select, fit)
+                                is KenKenPuzzle -> KenKenBoard(puzzle, state, controller::select, fit)
+                                is SkyscraperPuzzle -> SkyscraperBoard(puzzle, state, controller::select, fit)
                                 is CatsweeperPuzzle -> CatsweeperBoard(
-                                    puzzle, state, viewModel::catTap, viewModel::catMark, zoom = zoom,
+                                    puzzle, state, controller::catTap, controller::catMark, zoom = zoom,
                                 )
-                                null -> Unit
                             }
                         }
                     }
                     if (puzzle is KakuroPuzzle && state.hint == null) KakuroHint(puzzle, state)
                     state.hint?.let { hint ->
-                        HintCard(hint, onApply = viewModel::applyHint, onClose = viewModel::dismissHint)
+                        HintCard(hint, onApply = controller::applyHint, onClose = controller::dismissHint)
                     }
                     if (puzzle is CatsweeperPuzzle) {
                         CatsweeperBar(
                             remaining = puzzle.dogs.size - state.entries.count { it == CatsweeperPuzzle.MARKED },
                             markMode = state.markMode,
                             enabled = !state.solved && !state.lost,
-                            onToggleMark = viewModel::toggleMarkMode,
+                            onToggleMark = controller::toggleMarkMode,
                         )
                     } else {
                         // Einfach-Modus: nur die für das gewählte Feld möglichen Ziffern freigeben.
@@ -192,9 +184,9 @@ fun GameScreen(
                             allowed = allowed,
                             enabled = !state.solved && state.selected >= 0,
                             notesMode = state.notesMode,
-                            onDigit = viewModel::input,
-                            onErase = viewModel::erase,
-                            onToggleNotes = viewModel::toggleNotesMode,
+                            onDigit = controller::input,
+                            onErase = controller::erase,
+                            onToggleNotes = controller::toggleNotesMode,
                         )
                     }
                 }
@@ -207,24 +199,18 @@ fun GameScreen(
     if ((state.solved || state.lost) && dialogDismissedRound != state.round) {
         AlertDialog(
             onDismissRequest = { dialogDismissedRound = state.round },
-            title = { Text(stringResource(if (state.lost) R.string.lost_title else R.string.solved_title)) },
+            title = { Text(if (state.lost) Texte.LOST_TITLE else Texte.SOLVED_TITLE) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        if (state.lost) {
-                            stringResource(R.string.lost_text)
-                        } else {
-                            stringResource(R.string.solved_text, formatDuration(elapsed))
-                        },
-                    )
-                    if (state.hintsUsed > 0) Text(stringResource(R.string.hints_used, state.hintsUsed))
+                    Text(if (state.lost) Texte.LOST_TEXT else Texte.solvedText(formatDuration(elapsed)))
+                    if (state.hintsUsed > 0) Text(Texte.hintsUsed(state.hintsUsed))
                 }
             },
             confirmButton = {
-                TextButton(onClick = viewModel::playAgain) { Text(stringResource(R.string.play_again)) }
+                TextButton(onClick = controller::playAgain) { Text(Texte.PLAY_AGAIN) }
             },
             dismissButton = {
-                TextButton(onClick = onToMenu) { Text(stringResource(R.string.to_menu)) }
+                TextButton(onClick = onToMenu) { Text(Texte.TO_MENU) }
             },
         )
     }
@@ -250,16 +236,16 @@ private fun HintCard(hint: Hint, onApply: () -> Unit, onClose: () -> Unit) {
                 for (line in hint.steps) Text(line, style = MaterialTheme.typography.bodyMedium)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onClose) { Text(stringResource(R.string.hint_close)) }
+                TextButton(onClick = onClose) { Text(Texte.HINT_CLOSE) }
                 Spacer(Modifier.weight(1f))
                 FilledTonalButton(onClick = onApply) {
                     Text(
                         when (hint.action) {
-                            HintAction.PLACE -> stringResource(R.string.hint_apply_place, hint.value)
-                            HintAction.CLEAR -> stringResource(R.string.hint_apply_clear)
-                            HintAction.REVEAL -> stringResource(R.string.hint_apply_reveal)
-                            HintAction.MARK -> stringResource(R.string.hint_apply_mark)
-                            HintAction.UNMARK -> stringResource(R.string.hint_apply_unmark)
+                            HintAction.PLACE -> Texte.hintApplyPlace(hint.value)
+                            HintAction.CLEAR -> Texte.HINT_APPLY_CLEAR
+                            HintAction.REVEAL -> Texte.HINT_APPLY_REVEAL
+                            HintAction.MARK -> Texte.HINT_APPLY_MARK
+                            HintAction.UNMARK -> Texte.HINT_APPLY_UNMARK
                         },
                     )
                 }
@@ -278,7 +264,7 @@ private fun CatsweeperBar(remaining: Int, markMode: Boolean, enabled: Boolean, o
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            stringResource(R.string.catsweeper_help),
+            Texte.CATSWEEPER_HELP,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -287,10 +273,10 @@ private fun CatsweeperBar(remaining: Int, markMode: Boolean, enabled: Boolean, o
                 selected = markMode,
                 onClick = onToggleMark,
                 enabled = enabled,
-                label = { Text(stringResource(R.string.catsweeper_mark)) },
+                label = { Text(Texte.CATSWEEPER_MARK) },
             )
             Spacer(Modifier.weight(1f))
-            Text(stringResource(R.string.catsweeper_remaining, remaining), style = MaterialTheme.typography.titleMedium)
+            Text(Texte.catsweeperRemaining(remaining), style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -302,7 +288,7 @@ private fun CatsweeperBar(remaining: Int, markMode: Boolean, enabled: Boolean, o
 @Composable
 private fun KakuroHint(puzzle: KakuroPuzzle, state: GameUiState) {
     val selected = state.selected
-    val style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+    val style = MaterialTheme.typography.bodySmall.tabularNumbers()
     Column(
         Modifier
             .fillMaxWidth()
@@ -367,11 +353,11 @@ private fun NumberPad(
             FilterChip(
                 selected = notesMode,
                 onClick = onToggleNotes,
-                label = { Text(stringResource(R.string.notes)) },
+                label = { Text(Texte.NOTES) },
             )
             Spacer(Modifier.weight(1f))
             OutlinedButton(onClick = onErase, enabled = enabled) {
-                Text(stringResource(R.string.erase))
+                Text(Texte.ERASE)
             }
         }
     }

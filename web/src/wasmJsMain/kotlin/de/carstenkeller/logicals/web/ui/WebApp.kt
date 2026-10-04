@@ -2,11 +2,13 @@ package de.carstenkeller.logicals.web.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFontFamilyResolver
@@ -15,18 +17,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
+import de.carstenkeller.logicals.data.ThemeMode
+import de.carstenkeller.logicals.ui.game.GameController
+import de.carstenkeller.logicals.ui.game.GameScreen
+import de.carstenkeller.logicals.ui.menu.MainMenuScreen
+import de.carstenkeller.logicals.ui.menu.PuzzleHomeScreen
 import de.carstenkeller.logicals.web.Browser
+import de.carstenkeller.logicals.web.data.GameRepository
 import de.carstenkeller.logicals.web.data.Settings
-import de.carstenkeller.logicals.web.data.ThemeMode
 import de.carstenkeller.logicals.web.resources.Res
 import de.carstenkeller.logicals.web.resources.noto_color_emoji
 import de.carstenkeller.logicals.web.resources.noto_sans_math_symbols
 import de.carstenkeller.logicals.web.resources.roboto_bold
 import de.carstenkeller.logicals.web.resources.roboto_medium
 import de.carstenkeller.logicals.web.resources.roboto_regular
-import de.carstenkeller.logicals.web.ui.game.GameScreen
-import de.carstenkeller.logicals.web.ui.menu.MainMenuScreen
-import de.carstenkeller.logicals.web.ui.menu.PuzzleHomeScreen
 import de.carstenkeller.logicals.web.ui.theme.LogicalsTheme
 import de.carstenkeller.logicals.web.ui.theme.backgroundColor
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -84,14 +88,17 @@ fun WebApp() {
                             themeMode = it
                             Settings.themeMode = it
                         },
+                        versionName = Browser.version,
                     )
                     is Screen.Home -> PuzzleHomeScreen(
                         type = screen.type,
+                        repository = GameRepository,
+                        settings = Settings,
                         onBack = stack::pop,
                         onContinue = { stack.push(Screen.Game(screen.type, newGame = null)) },
                         onNewGame = { options -> stack.push(Screen.Game(screen.type, options)) },
                     )
-                    is Screen.Game -> GameScreen(
+                    is Screen.Game -> GameRoute(
                         type = screen.type,
                         newGame = screen.newGame,
                         onBack = stack::pop,
@@ -101,6 +108,26 @@ fun WebApp() {
             }
         }
     }
+}
+
+/** Spielbildschirm; die Zeit läuft nur, solange er offen und die Seite sichtbar ist. */
+@Composable
+private fun GameRoute(type: PuzzleType, newGame: PuzzleOptions?, onBack: () -> Unit, onToMenu: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val controller = remember(type, newGame) {
+        GameController(type, newGame, scope, repository = GameRepository, settings = Settings)
+    }
+    DisposableEffect(controller) {
+        if (!Browser.pageHidden) controller.onScreenResumed()
+        val unregister = Browser.onVisibilityChange {
+            if (Browser.pageHidden) controller.onScreenPaused() else controller.onScreenResumed()
+        }
+        onDispose {
+            unregister()
+            controller.onScreenPaused()
+        }
+    }
+    GameScreen(controller, onBack = onBack, onToMenu = onToMenu)
 }
 
 /**

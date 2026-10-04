@@ -1,4 +1,4 @@
-package de.carstenkeller.logicals.web.ui.game
+package de.carstenkeller.logicals.ui.game
 
 import de.carstenkeller.logicals.core.Candidates
 import de.carstenkeller.logicals.core.CatsweeperPuzzle
@@ -10,8 +10,8 @@ import de.carstenkeller.logicals.core.Puzzle
 import de.carstenkeller.logicals.core.PuzzleFactory
 import de.carstenkeller.logicals.core.PuzzleOptions
 import de.carstenkeller.logicals.core.PuzzleType
-import de.carstenkeller.logicals.web.data.GameRepository
-import de.carstenkeller.logicals.web.data.Settings
+import de.carstenkeller.logicals.data.GameStore
+import de.carstenkeller.logicals.data.PuzzleSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -49,26 +52,30 @@ data class GameUiState(
 )
 
 /**
- * Spiellogik eines Rätsel-Bildschirms, entspricht GameViewModel der Android-App.
+ * Spiellogik eines Rätsel-Bildschirms, gemeinsam für Android und Web.
  *
- * Statt ViewModel/SavedStateHandle lebt der Controller so lange wie der Bildschirm. Der Browser
- * hat nur einen Thread: Erzeugen und Hinweise laufen im selben Thread, nach einer kurzen Pause,
- * damit zuerst die Ladeanzeige gezeichnet wird.
+ * Lebt so lange wie der Bildschirm (Android: im ViewModel). Rechenintensives (Erzeugen,
+ * Hinweise) läuft in [computeContext]; im Browser gibt es nur einen Thread, dort sorgt eine
+ * kurze Pause davor dafür, dass zuerst die Ladeanzeige gezeichnet wird.
  *
  * @param newGame Optionen für ein neues Rätsel; null = gespeicherten Stand fortsetzen.
+ * @param onNewGameSaved Wird aufgerufen, sobald ein neu erzeugtes Rätsel gespeichert ist
+ *   (Android merkt sich das, um nach einem Prozessneustart nicht erneut zu erzeugen).
  */
 class GameController(
     val type: PuzzleType,
     private val newGame: PuzzleOptions?,
     private val scope: CoroutineScope,
+    private val repository: GameStore,
+    private val settings: PuzzleSettings,
+    private val computeContext: CoroutineContext = EmptyCoroutineContext,
+    private val onNewGameSaved: () -> Unit = {},
 ) {
-    private val repository = GameRepository
-
     private val _state = MutableStateFlow(GameUiState())
     val state: StateFlow<GameUiState> = _state.asStateFlow()
 
     private val _elapsed = MutableStateFlow(0L)
-    /** Bisherige Rätseldauer in Millisekunden; läuft nur, solange die Seite sichtbar ist. */
+    /** Bisherige Rätseldauer in Millisekunden; läuft nur, solange der Bildschirm aktiv ist. */
     val elapsed: StateFlow<Long> = _elapsed.asStateFlow()
 
     private var accumulated = 0L
@@ -82,7 +89,10 @@ class GameController(
 
     private suspend fun start() {
         val game = if (newGame != null) {
-            GameState.start(generate(newGame)).also { repository.save(it) }
+            GameState.start(generate(newGame)).also {
+                repository.save(it)
+                onNewGameSaved()
+            }
         } else {
             repository.load(type)
         }
@@ -93,9 +103,11 @@ class GameController(
         show(game, round = 0)
     }
 
-    private suspend fun generate(options: PuzzleOptions): Puzzle {
+    private suspend fun generate(options: PuzzleOptions): Puzzle = compute { PuzzleFactory.generate(type, options) }
+
+    private suspend fun <T> compute(block: () -> T): T {
         delay(FRAME_PAUSE_MILLIS)
-        return PuzzleFactory.generate(type, options)
+        return withContext(computeContext) { block() }
     }
 
     private fun show(game: GameState, round: Int) {
@@ -112,7 +124,7 @@ class GameController(
             lost = game.puzzle.isLost(entries),
             round = round,
             hintsUsed = game.hintsUsed,
-            easyMode = Settings.easyMode,
+            easyMode = settings.easyMode,
         )
         if (screenActive) startTimer()
     }
@@ -126,19 +138,20 @@ class GameController(
         scope.launch {
             val game = GameState.start(generate(puzzle.options))
             repository.save(game)
+            onNewGameSaved()
             show(game, round = current.round + 1)
         }
     }
 
     // ------------------------------------------------------------------ Timer
 
-    /** Bildschirm sichtbar (geöffnet bzw. Seite wieder im Vordergrund). */
+    /** Bildschirm sichtbar (Android: ON_RESUME; Web: geöffnet bzw. Seite wieder sichtbar). */
     fun onScreenResumed() {
         screenActive = true
         startTimer()
     }
 
-    /** Bildschirm verlassen oder Seite unsichtbar (App-Wechsel, Bildschirmsperre). */
+    /** Bildschirm verlassen, App im Hintergrund bzw. Seite unsichtbar. */
     fun onScreenPaused() {
         screenActive = false
         stopTimer()
@@ -189,7 +202,7 @@ class GameController(
 
     fun toggleEasyMode() {
         val enabled = !_state.value.easyMode
-        Settings.easyMode = enabled
+        settings.easyMode = enabled
         _state.update { it.copy(easyMode = enabled) }
     }
 
@@ -262,8 +275,7 @@ class GameController(
         _state.value = s.copy(hintLoading = true)
         val entries = s.entries.toIntArray()
         scope.launch {
-            delay(FRAME_PAUSE_MILLIS)
-            val hint = HintFinder.find(puzzle, entries)
+            val hint = compute { HintFinder.find(puzzle, entries) }
             _state.update {
                 // Inzwischen geänderter Stand: Hinweis verwerfen.
                 if (it.entries != s.entries || it.puzzle != puzzle) return@update it.copy(hintLoading = false)

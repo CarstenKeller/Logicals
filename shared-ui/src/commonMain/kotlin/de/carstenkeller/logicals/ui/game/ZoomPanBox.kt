@@ -1,4 +1,4 @@
-package de.carstenkeller.logicals.web.ui.game
+package de.carstenkeller.logicals.ui.game
 
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateDecay
@@ -31,7 +31,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import de.carstenkeller.logicals.web.ui.Texte
+import de.carstenkeller.logicals.ui.Texte
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
