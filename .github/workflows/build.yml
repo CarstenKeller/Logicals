@@ -80,7 +80,7 @@ jobs:
           mkdir -p /tmp/site && cp -r "$DIST" /tmp/site/Logicals
           (cd /tmp/site && python3 -m http.server 8080 >/dev/null 2>&1 &)
           cd .github/scripts && npm install --no-save --no-package-lock playwright-core@1 >/dev/null
-          node web-starttest.mjs http://localhost:8080/Logicals/ /tmp/site/start.png
+          node web-starttest.mjs http://localhost:8080/Logicals/
 
       - uses: actions/upload-artifact@v4
         with:
