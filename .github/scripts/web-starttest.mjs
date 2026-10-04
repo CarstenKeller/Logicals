@@ -54,6 +54,20 @@ try {
     await tree("Hinweis übernommen");
     await tap("Zurück");
     await tree("Sudoku-Startseite mit gespeichertem Stand");
+    await tap("Zurück");
+
+    // Übrige Rätsel: neues Rätsel erzeugen, Spielbildschirm prüfen, zurück ins Menü.
+    for (const name of ["Kakuro", "Futoshiki", "KenKen", "Skyscraper", "Catsweeper"]) {
+        const t = Date.now();
+        await tap(name);
+        await tap("Rätsel generieren", 500);
+        await page.getByText(/^Zeit /).first().waitFor({ timeout: 60000 });
+        console.log(`${name}: Spiel nach ${Date.now() - t} ms bereit`);
+        await page.waitForTimeout(500);
+        await tap("Zurück");
+        await tap("Zurück");
+    }
+    await tree("Hauptmenü am Ende");
 } catch (e) {
     console.log(started ? `FLOW-FEHLER: ${e.message}` : `Start fehlgeschlagen: ${e.message}`);
     if (!started) console.log("Ladetext: " + await page.textContent("#loading-text").catch(() => "?"));
